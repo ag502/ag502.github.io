@@ -1,5 +1,5 @@
 ---
-layout: post
+layout: posts
 title: "[Codility] Lv5 - Prefix Sums"
 excerpt: Codility Lesson Level 5 - Prefix Sums
 category: Algorithm
