@@ -1,5 +1,5 @@
 ---
-layout: collection
+layout: archive
 title: Algorithm
 excerpt: "A List of Algorithm Posts"
 comments: false
