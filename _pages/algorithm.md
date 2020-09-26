@@ -1,6 +1,6 @@
 ---
 title: "Algorithm"
 permalink: /algorithm/
-premalink: /categories/
+layout: categories
 excerpt: "Algorithm"
 ---
