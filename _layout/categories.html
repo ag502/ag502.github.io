@@ -4,7 +4,7 @@ layout: archive
 ---
 
 {{ content }}
-<h2>{page.title}</h2>
+
 
 {% assign categories_max = 0 %}
 {% for category in site.categories %}
@@ -13,6 +13,8 @@ layout: archive
   {% endif %}
 {% endfor %}
 
+<h2>{{page.title}}</h2>
+<h3>test</h3>
 <ul class="taxonomy__index">
   {% for i in (1..categories_max) reversed %}
     {% for category in site.categories %}
