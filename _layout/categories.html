@@ -19,6 +19,8 @@ layout: archive
   {% for i in (1..categories_max) reversed %}
     {% for category in site.categories %}
       {% if category[1].size == i %}
+        <h2 id="page-title" class="page__title">{{ page.title }}</h2>
+        <h3>test</h3>
         <li>
           <a href="#{{ category[0] | slugify }}">
             <strong>{{ category[0] }}</strong> <span class="taxonomy__count">{{ i }}</span>
