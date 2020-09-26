@@ -32,7 +32,7 @@ author_profile: true
 {% assign entries_layout = page.entries_layout | default: 'list' %}
 {% for i in (1..categories_max) reversed %}
   {% for category in site.categories %}
-    {% if category[1].size == i && category[1] == "Algorithm" %}
+    {% if category[1].size == i and category[0] == "Algorithm" %}
       <section id="{{ category[0] | slugify | downcase }}" class="taxonomy__section">
         <h2 class="archive__subtitle">{{ category[0] }}</h2>
         <div class="entries-{{ entries_layout }}">
