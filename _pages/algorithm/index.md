@@ -1,6 +1,5 @@
 ---
-layout: categories
-title: Algorithm
-excerpt: "A List of Algorithm Posts"
-comments: false
+permalink: /algorithm/
+title: "Algorithm"
+excerpt: "Algorithm"
 ---
