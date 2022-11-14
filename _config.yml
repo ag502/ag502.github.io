@@ -18,12 +18,12 @@ timezone: KR
 # jekyll-seo-tag settings › https://github.com/jekyll/jekyll-seo-tag/blob/master/docs/usage.md
 # ↓ --------------------------
 
-title: Chirpy # the main title
+title: 이재윤의 블로그 # the main title
 
-tagline: A text-focused Jekyll theme # it will display as the sub-title
+tagline: 배운걸 기록하는 블로그 입니다. # it will display as the sub-title
 
 description: >- # used by seo meta and the atom feed
-  A minimal, responsive, and powerful Jekyll theme for presenting professional writing.
+  배운것을 잊기전에 기록하는 블로그 입니다.
 
 # fill in the protocol & hostname for your site, e.g., 'https://username.github.io'
 url: ""
