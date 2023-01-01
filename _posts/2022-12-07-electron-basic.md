@@ -1,4 +1,4 @@
----
+<!-- ---
 title: 일렉트론 기초
 date: 2022-12-07
 categories: [electron]
@@ -45,13 +45,13 @@ _출처: electron 공식 문서_
 
 일렉트론의 프로세스도 이와 유사한 구조 입니다. 크롬 브라우저에서 탭을 관리하는 프로세스의 역할을 `renderer process` 가, 탭 프로세스들을 관리하는 프로세스의 역할을 `main process` 가 수행합니다. 각각의 특징은 아래와 같이 정리할 수 있습니다.
 
-- Main Process  
-  에플리케이션에서 단 하나만 존재  
+- Main Process
+  에플리케이션에서 단 하나만 존재
   애플리케이션의 window들을 관리
   `Node.js` 환경에서 동작
 
-- Renderer Process  
-  `Main Process` 에 의해 여러개 생성될 수 있음  
+- Renderer Process
+  `Main Process` 에 의해 여러개 생성될 수 있음
   View(html/css...)단을 담당
 
 ![electron process](/assets/img/basic-electron/electron-process.png)
@@ -60,13 +60,13 @@ _출처: electron 공식 문서_
 
 프로세스에 따라 디버깅 방법이 다릅니다.
 
-- Main Process  
-  `electron --inspect=5858 .` 명령어를 실행하면 해당 포트로 웹소켓이 연결됩니다.  
+- Main Process
+  `electron --inspect=5858 .` 명령어를 실행하면 해당 포트로 웹소켓이 연결됩니다.
   `chrome://inspect`의 Devices 탭에서 `localhost:5858`을 추가해 디버깅할 수 있습니다.
   만약 시작과 동시에 디버깅을 하고 싶다면 `electron --inspect-brk=5858 .` 명령어를 실행하면 됩니다.
-- Renderer Process  
+- Renderer Process
   `Renderer Process`의 경우 개발자 도구를 열어 디버깅할 수 있습니다.
 
   ```js
   mainWindow.webContents.openDevTools();
-  ```
+  ``` -->
