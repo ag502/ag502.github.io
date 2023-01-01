@@ -126,6 +126,7 @@ module.exports = {
 ```
 
 위 설정대로 빌드를 하게되면 결과는 다음과 같습니다.
+
 ![asset-resource](/assets/img/basic-webpack/asset-resource.png)
 
 위에서 언급했듯이 임포트된 이미지파일이 `output` 디렉토리에 따로 생성되었습니다.
@@ -222,3 +223,5 @@ module.exports = {
 > 위와 같이 `publicPath`를 설정해주게 되면, 이미지 파일의 경로는 아래와 같이 나오게됩니다.
 >
 > ![publicPath-cdn](/assets/img/basic-webpack/publicPath.png)
+
+## 💻 loader
