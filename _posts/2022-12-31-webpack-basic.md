@@ -93,6 +93,7 @@ module.exports = {
 위 설정의 의미는 빌드가 완료된 결과물을 `bundle.js`로 명명하고, 파일을 위치를 `dist/bundle.js`에 위치 시키라는 의미입니다.
 
 위 설정대로 빌드를 하게 되면 결과는 아래와 같이 나오게 됩니다.
+
 ![entry-output build](/assets/img/basic-webpack/entry-output.png)
 
 > 🖊 Webpack 설정 파일은 파일명을 `webpack.config.js`로 지정해 루트 폴더에 생성하면, webpack이 자동으로 설정파일을 인식하게 됩니다.
@@ -223,5 +224,3 @@ module.exports = {
 > 위와 같이 `publicPath`를 설정해주게 되면, 이미지 파일의 경로는 아래와 같이 나오게됩니다.
 >
 > ![publicPath-cdn](/assets/img/basic-webpack/publicPath.png)
-
-## 💻 loader
