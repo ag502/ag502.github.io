@@ -201,8 +201,8 @@ module.exports = {
 };
 ```
 
-> ### 🖊 publicPath
->
+#### 🖊 publicPath
+
 > `output` 프로퍼티에 `publicPath`라는 옵션이 있습니다. 이 옵션은 생성된 파일들을 브라우저에 로딩하기 위해 어떤 `url`을 사용해야하는지 webpack에 알려주는 역할을 합니다.  
 > `publicPath`에 아무런 설정을 해주지 않고 `asset/resource`방식으로 이미지를 임포트 했다고 가정해보겠습니다. 개발자 도구에서 해당 이미지의 `src` 속성을 보면 `http://[domain name]/dist/[image name][ext]` 형식으로 되어있는 것을 볼 수 있습니다. 이는 webpack5에서 `publicPath`가 `auto`이기 때문입니다. Webpack4의 경우는 빈 문자열("") 이므로 따로 설정을 해주지 않으면, 파일이 로드되지 않습니다.
 >
@@ -224,3 +224,102 @@ module.exports = {
 > 위와 같이 `publicPath`를 설정해주게 되면, 이미지 파일의 경로는 아래와 같이 나오게됩니다.
 >
 > ![publicPath-cdn](/assets/img/basic-webpack/publicPath.png)
+
+## 💻 loader
+
+`loader`는 모듈로 가져올 수 없는 파일들을 로드 할 때 사용합니다. 대표적인 `loader`로는 `CSS` 파일을 로드할 때 사용하는 `style-loader` 와 `css-loader`, 폴리필을 할 때 사용하는 `babel-loader`가 있습니다.
+
+### 👨‍💻 css-loader
+
+`css-loader`는 `CSS` 파일을 읽어 번들링 된 JavaScript 코드에 스타일을 넣어주는 역할을 합니다.
+
+```javascript
+// webpack.config.js
+
+module.exports = {
+  module: {
+    rules: [
+      {
+        test: /\.css$/,
+        use: ["css-loader"],
+      },
+    ],
+  },
+};
+```
+
+위와 같이 설정한 후 빌드를 실행하게 되면, 번들링된 결과에 `CSS` 파일이 코드로 변환된 것을 볼 수 있습니다. 하지만 스타일을 코드로 변환하기만 해서는 스타일을 적용할 수 없습니다. 변환된 결과를 태그를 통해 페이지에 삽입해야 합니다.
+
+### 👨‍💻 style-loader
+
+`css-loader`를 통해 변환된 `CSS` 파일을 `style` 태그에 넣어주는 역할을 합니다.
+
+```javascript
+// webpack.config.js
+
+module.exports = {
+  module: {
+    rules: [
+      test: /\.css$/,
+      use: ["style-loader", "css-loader"]
+    ]
+  }
+}
+```
+
+위와 같이 설정한 후 빌드를 실행하게 되면 아래와 같이, `head` 태그 하위에 `style` 태그가 생긴것을 볼 수 있습니다.
+
+![style-loader](/assets/img/basic-webpack/style-loader.png)
+
+#### 🖊 loader 적용순서
+
+> `style-loader`를 적용한 webpack 설정을 보면 `use` 프로퍼티에
+>
+> ```javascript
+> ["style-loader", "css-loader"];
+> ```
+>
+> 순으로 적용한것을 알 수 있습니다. `loader`는 배열의 역순으로 적용이 되기때문에 위 순서를 지키지 않을시 제대로 동작하지 않습니다.  
+> 위 선언을 말로 풀어 설명하자면, `css-loader`를 사용해 `CSS` 파일을 읽어 번들링된 JavaScript 코드에 넣은 후, `style-loader`를 사용해 `style` 태그에 넣어준다는 의미 입니다.
+
+### 👨‍💻 sass-loader
+
+`sass-loader`는 `SCSS` 나 `SASS` 파일을 읽어들일 수 있게끔 해주는 `loader` 입니다. 이 `loader`는 `css-loader`보다 먼저 적용되게끔 설정해 주어야 합니다.
+
+```javascript
+// webpack.config.js
+
+module.exports = {
+  module: {
+    rules: [
+      {
+        test: /\.s[ac]ss$/,
+        use: ["style-loader", "css-loader", "sass-loader"],
+      },
+    ],
+  },
+};
+```
+
+### 👨‍💻 babel-loader
+
+`babel-loader`의 경우는 최신 JavaScript 문법을 모든 브라우저에서 사용할 수 있도록 폴리필을 도와주는 `loader` 입니다. 사용하고자하는 `plugin`들이나, `preset`들을 함께 설정해줄 수 있습니다.
+
+```javascript
+// webpack.config.js
+
+module.exports = {
+  module: {
+    rules: [
+      {
+        test: /\.js$/,
+        use: {
+          loader: "babel-loader",
+          presets: ["@babel/env"],
+          plugins: ["@babel/plugin-proposal-class-properties"],
+        },
+      },
+    ],
+  },
+};
+```
