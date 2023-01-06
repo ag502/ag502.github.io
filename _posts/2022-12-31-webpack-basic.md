@@ -98,6 +98,14 @@ module.exports = {
 
 > 🖊 Webpack 설정 파일은 파일명을 `webpack.config.js`로 지정해 루트 폴더에 생성하면, webpack이 자동으로 설정파일을 인식하게 됩니다.
 
+#### 🖊 Browser Cache
+
+> 우리가 사용하는 웹 브라우저들은 캐시를 사용하고 있습니다. 한번 네트워크 요청을 보낸 파일들은 기억해 놓았다가 다음 요청이 들어올 때, 캐시에서 파일을 가져옵니다. 이를 통해 로딩시간을 단축시킬 수 있다는 장점이 있습니다.  
+> 하지만 캐시로 인해 문제도 발생합니다. 어떤 상황에서 문제가 발생하는지 한가지 상황을 가정해보겠습니다.
+>
+> 어떤 사용자가 자주 사용하고 있는 웹 서비스가 있습니다. 이 서비스의 개발자는 새로운 디자인을 적용해 빌드 후 배포했지만, 사용자는 바뀐 디자인을 바로 보지 못합니다. 브라우저의 캐시로 인해 예전 `html` 파일을 기억하고 있기 때문입니다.  
+> 이 문제는 해결하기 위한 방법으로는 빌드된 파일명에 `hash` 값을 추가하는 방법이 있습니다. `output.filename`에 `[contenthash]`를 추가하면 빌드될 때마다 파일명에 `hash` 값이 추가되어 매번 다른 이름의 파일이 생성됩니다. 이를 통해 브라우저의 캐시를 피할 수 있습니다.
+
 ## 💻 Asset Modules
 
 Webpack은 임포트한 모듈 중, JavaScript만 알아 볼 수 있습니다. 다시말해 이미지 파일이나, 텍스트 파일, `CSS` 파일등 JavaScript가 아닌 파일을 임포트하게 되면 빌드시 오류가 생기게 됩니다. 다른 종류의 파일들을 임포트하려면 추가적으로 설정을 해주어야 합니다.  
@@ -321,5 +329,91 @@ module.exports = {
       },
     ],
   },
+};
+```
+
+## 💻 plugin
+
+`loader`는 파일이나 모듈을 임포트하는데 사용했다면, `plugin`의 경우는 그 외의 추가적인 기능을 수행하게끔 도와줍니다. 대표적인 `plugin`의 종류와 역할을 살펴보겠습니다.
+
+### 👨‍💻 terser-webpack-plugin
+
+번들링된 JavaScript 파일의 크기를 줄여주는 `plugin` 입니다. Webpack4에서는 `npm` 모듈로 설치해주어야 했으나, webpack5에서는 내장되었습니다.
+
+아래와 같이 설정해 사용할 수 있으며, 결과물은 다음과 같습니다.
+
+```javascript
+// webpack.config.js
+const TerserPlugin = require("terser-webpack-plugin");
+
+module.exports = {
+  plugins: [new TerserPlugin()],
+};
+```
+
+![terser-plugin](/assets/img/basic-webpack/terser-plugin.png)
+
+`terser-webpack-plugin`의 경우 개발중일때는 사용하지 않습니다. 빌드 시간이 오래걸리기 때문입니다. 또한 실제 배포를 할 경우에는 자동으로 기본설정이 적용되어 빌드됩니다.
+
+### 👨‍💻 mini-css-extract
+
+`css-loader`와 `style-loader`를 사용하게되면, `CSS`속성들이 번들링된 파일에 들어가기 때문에 결과물의 용량이 커지게 됩니다. 만약 `CSS`만 따로 추출한다면, 번들링된 결과물의 용량이 줄일 수 있습니다.
+
+```javascript
+// webpack.config.js
+const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+
+module.exports = {
+  module: {
+    rules: [
+      {
+        test: /\.css$/,
+        use: [MiniCssExtractPlugin.loader, "css-loader"],
+      },
+    ],
+  },
+
+  plugins: [
+    new MiniCssExtractPlugin({
+      filename: "style.[name].css",
+    }),
+  ],
+};
+```
+
+위와 같이 설정할 수 있으며, 빌드된 결과는 아래와 같습니다.
+
+![mini-css-extract](/assets/img/basic-webpack/mini-css-extract.png)
+
+위 그림과 같이 임포트한 `CSS`파일이 별도의 파일로 분리된것을 알 수 있습니다.
+
+#### 🖊 mini-css-extract 옵션
+
+> 번들링된 `CSS`의 파일명이나 위치를 변경하고 싶다면, 인스턴스 생성시에 옵션들을 인자로 넘겨주면 변경할 수 있습니다.
+
+### 💻 clean-webpack-plugin
+
+빌드가 실행되기전 `output` 디렉토리에 있는 이전 결과물들을 모두 지워주는 역할을 합니다.
+
+```javascript
+// webpack.config.js
+const { CleanWebpackPlugin } = require("clean-webpack-plugin");
+
+module.exports = {
+  plugins: [new CleanWebpackPlugin()],
+};
+```
+
+### 💻 html-webpack-plugin
+
+지금까지는 빌드 결과물로 나온 JavaScript 파일이나 `CSS` 파일들을 직접 `html` 파일에 임포트해 실행했습니다. 결과물로 나온 파일의 갯수가 적거나 이름이 단순하다면 큰 문제가 되지 않지만, 그 반대의 경우는 불편할 수 있습니다. 이런 문제를 `html-webpack-plugin`으로 해결할 수 있습니다.  
+`html-webpack-plugin`의 경우 번들링 결과로 나온 파일들을 자동으로 `html`파일에 넣어주는 역할을 합니다.
+
+```javascript
+// webapck.config.js
+const HtmlWebpackPlugin = require("html-webpack-plugin");
+
+module.exports = {
+  plugins: [new HtmlWebpackPlugin()],
 };
 ```
