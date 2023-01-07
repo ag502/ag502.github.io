@@ -391,7 +391,7 @@ module.exports = {
 
 > 번들링된 `CSS`의 파일명이나 위치를 변경하고 싶다면, 인스턴스 생성시에 옵션들을 인자로 넘겨주면 변경할 수 있습니다.
 
-### 💻 clean-webpack-plugin
+### 👨‍💻 clean-webpack-plugin
 
 빌드가 실행되기전 `output` 디렉토리에 있는 이전 결과물들을 모두 지워주는 역할을 합니다.
 
@@ -404,7 +404,7 @@ module.exports = {
 };
 ```
 
-### 💻 html-webpack-plugin
+### 👨‍💻 html-webpack-plugin
 
 지금까지는 빌드 결과물로 나온 JavaScript 파일이나 `CSS` 파일들을 직접 `html` 파일에 임포트해 실행했습니다. 결과물로 나온 파일의 갯수가 적거나 이름이 단순하다면 큰 문제가 되지 않지만, 그 반대의 경우는 불편할 수 있습니다. 이런 문제를 `html-webpack-plugin`으로 해결할 수 있습니다.  
 `html-webpack-plugin`의 경우 번들링 결과로 나온 파일들을 자동으로 `html`파일에 넣어주는 역할을 합니다.
