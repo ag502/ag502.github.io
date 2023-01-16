@@ -429,3 +429,30 @@ module.exports = {
 #### 🖊 Webpack 파일 분리하기
 
 > `mode` 프로퍼티의 경우 배포시에는 `production`으로 개발시에는 `development`로 설정을 해주어야 하는데, 매번 값을 바꾸기는 번거롭습니다. 이 문제를 해결하기 위해, 배포용 webpack 파일과 개발용 webpack 파일을 분리해 관리해주면 됩니다. 빌드 명령은 `--config` 플래그와 함께 webpack의 경로를 명시해 주면 됩니다.
+
+## 💻 dev server
+
+지금까지는 빌드를 한 후, `html-webpack-plugin`으로 생성된 `html` 파일을 직접 실행시켜 결과를 확인했습니다. 코드의 변경이 있을때 마다 매번 빌드 후 실행하는 것은 번거롭고 불편합니다.
+이를 해결하기 위해 `webpack-dev-server`를 사용할 수 있습니다.  
+`webpack-dev-server`는 개발용 서버를 제공해 코드의 변경 사항이 있을 때 마다 자동으로 빌드 및 reload시켜 바로 결과를 확인할 수 있게 해주는 도구 입니다. 지금부터 `webpack-dev-server`의 실행 방법과 설정 방법을 알아보겠습니다.  
+dev-server는 `webpack serve --config [config 파일 경로]`로 실행할 수 있으며 `--hot` 플래그를 붙일경우 HMR(Hot Module Replace)를 수행합니다. 단 `webpack-dev-server` v4.0.0 부터는 기본적으로 해당 옵션이 활성화 되어 있습니다.
+
+`webpack-dev-server`설정은 아래와 같습니다.
+
+```javascript
+module.exports = {
+  devServer: {
+    // 포트번호
+    port: 9000,
+    // 정적 파일 제공 위치 (보통 output directory와 동일)
+    static: path.resolve(__dirname, "dist"),
+    devMiddleware: {
+      // html 파일을 제공할 위치
+      index: "index.html",
+      writeToDisk: true,
+    },
+  },
+};
+```
+
+한가지 눈여겨 볼 점은 `writeToDisk`필드 입니다. `webpack-dev-server`는 in memory로 동작하기 때문에 실행을 해도 결과물이 프로젝트내에 나타나지 않습니다. 만약 결과물을 직접 확인하고 싶다면, 해당 옵션을 `true`로 설정하면 됩니다.
