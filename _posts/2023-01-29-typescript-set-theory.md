@@ -31,9 +31,12 @@ const x: never = 12;
 또한 `never`는 아래와 같은 특징을 가지고 있습니다.
 
 ```typescript
-A & never; // never <-> A ⋂ ∅ = ∅
-A | never; // A <-> A ⋃ ∅ = A
-Exclude<0, 0>; // never <-> 0 - 0 = ∅
+// never <-> A ⋂ ∅ = ∅
+A & never;
+// A <-> A ⋃ ∅ = A
+A | never;
+// never <-> 0 - 0 = ∅
+Exclude<0, 0>;
 ```
 
 ## 💻 Literal Types
@@ -67,8 +70,57 @@ const c: AB = "C";
 
 ## 💻 boolean, string
 
-JavaScript에는 7가지의 원시 타입(`number`, `bigint`, `boolean`, `string`, `symbol`, `undefined`, `null`)이 존재하며, 이 중 `undefined` 와 `null`을 제외하고는 거의 유사하게 동작합니다. `boolean`, `string` 타입을 통해 원시타입을 특징을 살펴보겠습니다.
+JavaScript는 7개의 원시타입 (`number`, `bigint`, `boolean`, `string`, `symbol`, `undefined`, `null`)을 가지고 있으며, 서로 비슷하게 동작합니다. `boolean`, `string` 타입을 통해 원시타입의 특징을 살펴보겠습니다.
 
 ### 👨‍💻 boolean
 
-`boolean`타입은 원시 타입 중 가장 적은 원소를 가지고 있는 타입입니다. `true`와 `false` 단 두개의 값을 원소로 가지고 있습니다.
+`boolean`타입은 `true`와 `false` 단 두개의 값을 원소로 가지고 있습니다. 따라서 `boolean` 타입을 `true literal type`과 `false literal type`의 합집합(유니온)으로 표현할 수 있습니다.
+
+```typescript
+type Boolean = true | false;
+```
+
+또한 아래와 같은 특징을 가집니다.
+
+```typescript
+// never <-> true ⋂ false = ∅
+true & false;
+// true <-> boolean ⋂ true = true
+boolean & true;
+// never <-> true ⋂ never = ∅
+true & never;
+// false <-> boolean - true
+Exclude<boolean, true>;
+```
+
+`null`, `undefined`는 각각 하나의 값을 원소로 가진다는 특징을 제외하고는, `boolean`과 동일합니다.
+
+### 👨‍💻 string
+
+`string` 타입은 무한개의 값을 원소로 갖는 무한집합입니다.
+
+위에서 살펴본 것 처럼, `string literal type`이나 유한한 `string literal type`들의 유니온 타입을 부분 집합으로 가질 수 있습니다.
+
+```typescript
+type Korea = "korea";
+type America = "america";
+type Country = Korea | America;
+```
+
+`string` 타입은 다른 원시타입과는 다르게 [`template literal type`](https://www.typescriptlang.org/docs/handbook/2/template-literal-types.html)이 있는데, 이를 이용하면 무한 집합을 부분집합으로 만들 수 있습니다.
+
+```typescript
+type Hello = `hello${string}`;
+```
+
+위 타입은 `hello`라는 문자열로 시작하는 모든 문자열을 나타내는 타입입니다.
+
+한가지 주의할 점은 `string` 타입이 모든 가능한 `literal type`들의 합집합을 모델링 하고 있지 않다는 것입니다. 가령, `string` 타입에서 `a`라는 `literal type`을 제외시킨 타입은 `a`를 할당할 수 없지만, 실제로는 `string`타입으로 평가되어 정상적으로 할당할 수 있습니다.
+
+```typescript
+// string type
+type ExceptA = Exclude<string, "a">;
+const a: ExceptA = "a";
+```
+
+`number`, `symbol`, `bigint`와 같은 원시타입들도 `template literal type`을 제외하고는 `string` 타입과 동일하게 동작합니다.
