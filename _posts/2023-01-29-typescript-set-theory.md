@@ -124,3 +124,115 @@ const a: ExceptA = "a";
 ```
 
 `number`, `symbol`, `bigint`와 같은 원시타입들도 `template literal type`을 제외하고는 `string` 타입과 동일하게 동작합니다.
+
+## 💻 interface & object types
+
+객체의 타입을 아래와 같이 표현할 수 있습니다.
+
+```typescript
+interface Identified {
+  id: string;
+}
+```
+
+타입스크립트는 구조적 타이핑을 지향하기 때문에, 어떤 객체가 `string` 타입의 `id` 프로퍼티를 갖는다면 그 객체는 `Identified` 타입입니다.
+
+#### 🖊 구조적 타이핑이란?
+
+> JavaScript의 덕 타이핑(duck typing)을 모델링한 것으로, 객체가 어떤 타입에 부합하는 변수와 메서드를 가질 경우 객체를 해당 타입에 속하는 것으로 간주하는 방식 입니다.
+
+따라서 `Identified` 타입을 집합으로 생각해 본다면, 원소들은 `string` 타입의 `id` 프로퍼티를 같는 모든 객체입니다.
+
+객체의 타입도 집합으로 생각할 수 있으므로, 유니온 및 인터섹션 연산을 처리할 수 있습니다.
+
+```typescript
+interface Person {
+  name: string;
+}
+
+interface Lifespan {
+  birth: Date;
+  death?: Date;
+}
+
+type PersonSpan = Person & LifeSpan;
+```
+
+위의 예시에서, `PersonSpan` 타입은 `Person` 타입과 `Lifespan` 타입의 교집합을 의미함으로 결과는 아래와 같습니다.
+
+```typescript
+type PersonSpan = {
+  name: string;
+  birth: Date;
+  death?: Date;
+};
+```
+
+물론 구조적 타이핑으로 인해, 위에서 정의된 세개의 프로퍼티외의 프로퍼티를 가지고 있어도, `PersonSpan` 타입입니다.
+
+> 🖊 객체의 인터섹션 타입은 각 타입 내의 속성을 모두 포함시키면 됩니다.  
+> 하지만 유니온 타입의 경우는 위 규칙이 통하지 않습니다.
+>
+> ```typescript
+> // never, 유니온 타입에 해당하는 키가 존재하지 않음
+> type T = keyof (Person | Lifespan);
+>
+> keyof (A&B) = keyof A | keyof B
+> keyof (A|B) = keyof A & keyof B
+> ```
+
+## 💻 잉여 속성 체크 (Excess Property Checking)
+
+아래와 같은 상황을 살펴보겠습니다.
+
+```typescript
+interface Room {
+  numDoors: number;
+  ceilingHeightFt: number;
+}
+
+const r: Room = {
+  numDoors: 1,
+  ceilingHeightFt: 10,
+  elephant: "present",
+  // Error: Object literal may only specify known properties, and 'elephant' does not exist in type 'Room'.
+};
+```
+
+구조적 타이핑의 관점에서 보면 변수 `r`에 할당된 객체 리터럴은 `Room`타입에 포함되기 때문에, 오류가 발생하면 안되지만, 실제로는 발생합니다.
+이는 TypeScript의 잉여 속성 체크라는 특징 때문입니다.
+
+잉여 속성 체크는 `타입이 명시된 변수에 객체 리터럴을 할당할 때` 나, `함수의 인자로 객체 리터럴을 전달할 때` 해당 타입의 속성이 있는지, 그 외의 속성은 없는지 확인하는 특성입니다.
+
+강조한 부분처럼 객체 리터럴을 직접 할당할 때만 동작합니다. 가령 아래와 같은 상황에서는 잉여 속성 체크가 동작하지 않습니다.
+
+```typescript
+const obj = {
+  numDoors: 1,
+  ceilingHeightFt: 10,
+  elephant: "present",
+};
+
+const r: Room = obj;
+```
+
+잉여 속성 체크는 선택적 속성만 가지는 약한 타입에도 비슷하게 적용 됩니다.
+
+```typescript
+interface LineChartOptions {
+  logScale?: boolean;
+  invertedYAxis?: boolean;
+  areaChart?: boolean;
+}
+
+const opts = { logscale: true };
+
+//Error: Type '{ logscale: boolean; }' has no properties in common with type 'LineChartOptions'.
+const o: LineChartOptions = opts;
+```
+
+약한 타입의 경우, 값 타입과 선언 타입의 공통된 속성이 있는지를 확인하는 검사를 진행하며, 이는 할당문마다 수행됩니다.
+
+## 💻 extends
+
+TypeScript에서 `A extends B`는 타입 '`A`는 타입 `B`의 서브 타입(부분 집합)이다' 로 해석할 수 있습니다.
