@@ -1,6 +1,6 @@
 ---
 title: TypeScript 타입 집합으로 생각하기
-date: 2022-12-31
+date: 2023-01-29
 categories: [TypeScript]
 tags: [TypeScript]
 image:
