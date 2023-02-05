@@ -235,4 +235,64 @@ const o: LineChartOptions = opts;
 
 ## 💻 extends
 
-TypeScript에서 `A extends B`는 타입 '`A`는 타입 `B`의 서브 타입(부분 집합)이다' 로 해석할 수 있습니다.
+TypeScript에서 `A extends B`는 타입 '`A`는 타입 `B`의 서브 타입(부분 집합)이다' 로 해석할 수 있습니다.  
+`extends`를 사용한 타입 상속의 예시를 살펴보겠습니다.
+
+```typescript
+// 0, boolean 타입은 never 타입(공집합)의 서브타입이 될 수 없습니다.
+type A = boolean extends never ? 1 : 0;
+
+// 1, true 리터럴 타입은 boolean 타입의 서브타입 입니다.
+type B = true extends boolean ? 1 : 0;
+
+// 1, never 타입은 모든 타입의 서브타입 입니다.
+type C = never extends T ? 1 : 0;
+
+// 1
+type D = never extends never ? 1 : 0;
+
+// 0, 0과 1의 유니온 타입은 리터럴 타입 0의 서브타입이 될 수 없습니다.
+type E = 0 | 1 extends 0 ? 1 : 0;
+
+// T가 literal 타입, literal 타입들의 union 타입, template literal 타입, string 타입일 경우만 1
+type F = T extends string ? 1 : 0;
+```
+
+## 💻 unknown, any
+
+`unknown`, `any` 타입은 임의의 JavaScript 값들을 의미합니다.
+
+### 👨‍💻 unknown
+
+`unknown` 타입은 TypeScript에서 타입들의 전체 집합을 의미합니다. 따라서 아래와 같은 특징을 가집니다.
+
+```typescript
+// 1, unknown은 모든 타입의 값들을 포함하는 전체 집합입니다.
+type Y =
+  | string
+  | number
+  | boolean
+  | symbol
+  | object
+  | bigint
+  | null
+  | undefined extends unknown
+  ? 1
+  : 0;
+```
+
+`unknown` 타입 역시 모든 타입들을 모델링하고 있지는 않습니다. 따라서 `Exclude<unknown, string>`과 같은 타입은 `unknown`이 됩니다.
+
+### 👨‍💻 any
+
+`any` 타입은 집합이긴 하지만, 어떤 집합인지는 특정할 수 없는 타입입니다. 따라서 아래와 같은 특징을 가질 수 있습니다.
+
+```typescript
+// 1|0, any가 어떤 타입이냐에 따라 1이 될 수도, 0이 될 수도 있습니다.
+type A = any extends string ? 1 : 0;
+
+// 1|0, any가 never 타입일 경우 1, 다른 타입일 경우 0이 됩니다.
+type B = any extends never ? 1 : 0;
+```
+
+또한 `any` 타입을 상속받는 `conditional type`들은 모두 참이 됩니다.
