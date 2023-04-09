@@ -52,7 +52,7 @@ public class User {
         return this.email;
     }
 
-    public vod setEmail(String email) {
+    public void setEmail(String email) {
         return this.email = email;
     }
 }
