@@ -1,6 +1,6 @@
 ---
 title: Spring annotation
-date: 2023-04-12
+date: 2023-04-14
 categories: [Spring]
 tags: [Spring]
 ---
