@@ -1,0 +1,160 @@
+---
+title: 일렉트론 Main Process - Browser Window
+date: 2023-04-16
+categories: [electron]
+tags: [electron]
+image:
+  path: /assets/img/electron-main.jpeg
+  alt: electron logo
+---
+
+`Main Process`에서 `browser window(renderer process, 창)`를 생성하고 제어하는 역할을 합니다. `browser window`는 `app`의 `ready` 이벤트가 실행되기 전까지 생성될 수 없습니다. 또한 `app` 모듈과 같이 `Event Emitter`를 상속 받았기 때문에 다양한 이벤트들을 수신할 수 있습니다. `BrowserWindow`에서 사용하는 함수들과 이벤트들을 살펴보겠습니다.
+
+## 💻 생성
+
+`BrowserWindow` 클래스의 인스턴스를 생성 함으로써 `browser window`를 만들 수 있습니다. 인스턴스 생성시에 생성자에는 `window`의 특성을 설정할 수 있는 [옵션들](https://www.electronjs.org/docs/latest/api/browser-window#new-browserwindowoptions)을 넘겨줄 수 있습니다.
+
+```javascript
+const { app, BrowserWindow } = require("electron");
+
+let mainWindow = null;
+
+function createWindow() {
+  mainWindow = new BrowserWindow({
+    width: 1000,
+    height: 800,
+  });
+}
+
+app.whenReady().then(() => {
+  createWindow();
+});
+```
+
+위 코드는 `1000 x 800` 크기의 `window`를 생성하는 코드 입니다.
+
+## 💻 loadURL
+
+`browser window`에 표시할 컨텐츠를 `url`을 통해 로드할 수 있는 함수입니다.  
+함수의 결괏값으로 `promise`를 반환하는데 로딩에 성공하면 `resolve`되며 실패할 경우 `reject` 됩니다.  
+함수에 전달하는 인자는 `url`외에도 [여러 옵션들](https://www.electronjs.org/docs/latest/api/browser-window#winloadurlurl-options)이 있습니다.
+
+```javascript
+function createWindow() {
+  mainWindow = new BrowserWindow({
+    // ... 옵션들
+  });
+
+  mainWindow.loadURL("http://localhost:3000");
+}
+```
+
+## 💻 loadFile
+
+`browser window`에 표시할 컨텐츠를 파일로 부터 받아오는 함수입니다.
+
+```javascript
+function createWindow() {
+  mainWindow = new BrowserWindow({
+    // ... 옵션들
+  });
+
+  mainWindow.loadFile("./index.html");
+}
+```
+
+#### 🖊 loadURL vs loadFile
+
+> 두 함수 모두 `window`에 로드될 컨텐츠를 불러온다는 공통점이 있지만, 불러오기위해 접근하는 곳이 다릅니다.  
+>  `loadURL`의 경우 명시한 `URL`에 접근해 해당 페이지를 불러오며, `loadFile`은 로컬 파일에 접근해 불러옵니다. 따라서 `loadFile`의 컨텐츠 로드 속도가 `loadURL`보다 빠릅니다.
+
+## 💻 ready-to-show
+
+`renderer process`가 `window`에 로드할 컨텐츠를 모두 렌더링하면 트리거 되는 이벤트 입니다.  
+해당 이벤트를 이용하면, 컨텐츠 로드에 시간이 소요되는 상황에서 `window`에 빈 화면이 노출되었다가 컨텐츠가 로드되는 visual-flash(깜빡임) 효과를 막을 수 있습니다.
+
+```javascript
+function createWindow() {
+  mainWindow = new BrowserWindow({
+    width: 1000,
+    height: 800,
+    show: false,
+  });
+
+  mainWindow.once("ready-to-show", () => {
+    mainWindow.show();
+  });
+}
+```
+
+위 코드에서 `BrowserWindow`에 절달해준 `show` 옵션은 `window`를 생성하자마자 노출 시킬것인지를 설정해주는 옵션입니다. 해당 옵션을 `false`로 설정했으니 명시적으로 `show` 함수를 호출해 `window`를 노출 시켜야 합니다.  
+처음에는 `window`를 노출시키지 않다가 `ready-to-show` 이벤트가 트리거 된 후에 `window`를 노출 시킴으로써 깜빡임 현상을 막을 수 있습니다.
+
+#### 🖊 `did-finish-load`와의 관계
+
+> 아래에서 살펴볼 `WebContent`에서 수신하는 이벤트로 로드할 컨텐츠가 로컬에 존재하는 파일이라면 (`loadFile`) 해당 이벤트 트리거 이후에 `ready-to-show` 이벤트가 발생하며, 원격 리소스라면(`loadURL`) 해당 이벤트 트리거 이전에 발생합니다.
+
+#### 🖊 `backgroundColor` property
+
+> `browser window`의 배경색을 지정할 수 있는 옵션입니다.  
+> 해당 옵션을 통해 `window`의 배경색을 컨텐츠의 배경색과 동일하게 지정함으로써 깜빡임이 일어나지 않는것 처럼 보이게 하는 트릭을 사용할 수 있습니다. 공식 문서에서는 더 자연스로운 UX를 위해 `ready-to-show` 이벤트를 사용하고 있더라도 `backgroundColor`를 컨텐츠와 동일한 색으로 지정하기를 [권장](https://www.electronjs.org/docs/latest/api/browser-window)하고 있습니다.
+
+## 💻 Parent and Child Window
+
+`window` 간의 부모, 자식관계를 설정할 수 있습니다. Child `window`는 항상 Parent `window`위로 올라갑니다. Parent `window`가 움직이면 Child `window`는 같이 움직이며 부모 `window`가 닫히면 자식 `window`역시 닫히게 됩니다.
+
+```javascript
+let mainWindow = null;
+let secondaryWindow = null;
+
+function createWindow() {
+  mainWindow = new BrowserWindow({
+    width: 1000,
+    height: 800,
+  });
+
+  secondaryWindow = new BrowserWindow({
+    width: 400,
+    height: 300,
+    parent: mainWindow,
+  });
+}
+```
+
+## 💻 Frameless Window
+
+`BrowserWindow`의 옵션중 `frame`을 `false`로 설정하면 프레임이 없는 (`frameless`) `window`를 생성할 수 있습니다. `frameless window`는 드래그 할 수 없다는 특징이 있습니다.  
+이를 해결하기 위해서는 로드되는 컨텐츠 `html` 태그에 특정 `css`속성을 지정해주어야 합니다.
+
+```javascript
+function createWindow() {
+  mainWindow = new BrowserWindow({
+    width: 1000,
+    height: 800,
+    frame: false,
+  });
+}
+```
+
+```html
+<body style="user-select: none; -webkit-app-region: drag;">
+  <!--  -->
+</body>
+```
+
+위와 같이 `body` 태그에 스타일을 지정해 주면 `frameless window`를 움직일 수 있습니다. 하지만 위 방법에는 한가지 문제가 있습니다. 만약 `body` 태그안에 `<input type="range"/>`와 같은 드래그 요소가 있을 경우 정상적으로 동작하지 않습니다. 따라서 해당 태그에는 아래와 같이 추가적인 스타일을 적용해 주어야 합니다.
+
+```html
+<input
+  type="range"
+  name="range"
+  min="0"
+  max="10"
+  style="
+    -webkit-app-region: no-drag"
+/>
+```
+
+#### 🖊 titleBarStyle
+
+> `window`의 `title bar` 스타일을 지정할 수 있는 옵션입니다. OS에 따라 적용된 모습이 다릅니다.

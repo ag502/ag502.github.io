@@ -83,7 +83,8 @@ app.on("browser-window-focus", (event, window) => {
 
 ## 💻 getPath(name)
 
-`name`에 해당하는 경로를 불러오는 함수입니다. 사용자의 홈 디렉토리(home), 문서 폴더(document)등의 경로를 불러올 수 있습니다.
+`name`에 해당하는 경로를 불러오는 함수입니다. 사용자의 홈 디렉토리(home), 문서 폴더(document)등의 경로를 불러올 수 있습니다.  
+경로의 이름은 [electron 문서](https://www.electronjs.org/docs/latest/api/app#appgetpathname)에서 확인할 수 있습니다.
 
 ## 💻 quit()
 
