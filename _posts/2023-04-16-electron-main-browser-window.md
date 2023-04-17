@@ -158,3 +158,53 @@ function createWindow() {
 #### 🖊 titleBarStyle
 
 > `window`의 `title bar` 스타일을 지정할 수 있는 옵션입니다. OS에 따라 적용된 모습이 다릅니다.
+
+## 💻 기타 설정들
+
+### 🙋‍♂️ minWidth/minHeight
+
+`window`의 최소 너비와 높이를 설정하는 속성입니다.  
+기본값은 0이며 값을 지정하게되면, 해당 값 이하로 줄어들지 않습니다.
+
+```javascript
+createWindow() {
+  mainWindow = new BrowserWindow({
+    minWidth: 500,
+    minHeight: 500
+  })
+}
+```
+
+위 예시는 창 크기가 최소 `500 x 500` 인 `window`를 만드는 코드입니다.
+
+### 🙋‍♂️ resizable
+
+해당 옵션으로 `window`의 크기 조절 여부를 지정할 수 있습니다.
+
+### 🙋‍♂️ movable
+
+`window`를 움직일 수 있는지 여부를 결정하는 옵션입니다.
+
+### 🙋‍♂️ minimizable/maximizable
+
+최소화, 최대화 가능 여부를 결정하는 옵션입니다.
+
+## 💻 Event
+
+`browser window`가 수신하는 이벤트는 `app`과 달리 이벤트 리스너를 설정한 `window`만 이벤트를 수신한다는 차이점이 있습니다.
+
+```javascript
+let mainWindow = null;
+let secondaryWindow = null;
+
+function createWindow() {
+  mainWindow = new BrowserWindow();
+  secondaryWindow = new BrowserWindow();
+
+  mainWindow.on("focus", () => {
+    console.log("focus");
+  });
+}
+```
+
+위 예시에서 `mainWindow`에 `focus` 이벤트의 리스너를 설정해주었습니다. 따라서 `mainWindow`가 `focus` 되었을 때만 해당 이벤트를 수신합니다.
