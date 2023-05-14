@@ -11,4 +11,4 @@
 |    [Web Worker](https://www.smashingmagazine.com/2023/04/potential-web-workers-multithreading-web/)     |  ❌  |  ❌  |
 |                  [Not Blocking The Event Loop](https://www.bbss.dev/posts/eventloop/)                   |  ❌  |  ❌  |
 |                 [Interactive guid to react rendering](https://ui.dev/why-react-renders)                 |  ❌  |  ❌  |
-|              [JavaScript](https://www.honeybadger.io/blog/javascript-regular-expressions/)              |  ❌  |  ❌  |
+|           [JavaScript Regex](https://www.honeybadger.io/blog/javascript-regular-expressions/)           |  ❌  |  ❌  |
