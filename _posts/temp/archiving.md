@@ -12,3 +12,4 @@
 |                  [Not Blocking The Event Loop](https://www.bbss.dev/posts/eventloop/)                   |  ❌  |  ❌  |
 |                 [Interactive guid to react rendering](https://ui.dev/why-react-renders)                 |  ❌  |  ❌  |
 |           [JavaScript Regex](https://www.honeybadger.io/blog/javascript-regular-expressions/)           |  ❌  |  ❌  |
+|        [React reconciliation](https://www.developerway.com/posts/reconciliation-in-react#part2)         | ⭕️  |  ❌  |
