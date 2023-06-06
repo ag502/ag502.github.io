@@ -2,7 +2,10 @@
 title: 웹뷰에서 모바일 기기 판별하기
 date: 2023-05-23
 categories: [JavaScript]
-tags: [JavaScripts]
+tags: [JavaScript]
+image:
+  path: /assets/img/js-main.png
+  alt: javascript logo
 ---
 
 ## 💻 개요
