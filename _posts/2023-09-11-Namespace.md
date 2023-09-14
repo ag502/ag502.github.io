@@ -377,6 +377,18 @@ for (let s of strings) {
 - `Browser`  
   `script` 태그에 의존성을 갖는 순서대로 컴파일된 모듈들을 명시해 주거나, `outFile` 옵션을 지정해 하나로 합쳐진 파일을 명시해 주어 실행시킬 수 있습니다.
 
+#### 🖊 Triple-Slash Directives 종류
+
+> 1. <span style="color:cyan;">&lt;reference path="..."/ &gt;</span>  
+>     해당 지시어는 파일 간의 의존성 선언으로 사용됩니다. 이 지시어가 파일의 상위에 존재하면 컴파일러는 추가 파일을 컴파일 과정에 포함시킵니다.  
+>    또한 위에서 살펴보았듯이, `--outFile` 옵션을 사용할 때 모듈의 정렬 순서를 지정하는 역할도 합니다.
+> 2. <span style="color:cyan;">&lt;reference types="..."/ &gt;</span>  
+>     패키지의 의존성을 선언하는 지시어입니다.  
+>    `Type declaration` 파일에 <span style="color:cyan;">&lt;reference types="node"/ &gt;</span> 를 선언하는 것은 `@types/node/index.d.ts` 에 선언된 타입을 사용한다고 알리는 것이고, 이 패키지는 선언 파일과 함께 컴파일에 포함됩니다.
+> 3. <span style="color:cyan;">&lt;reference lib="..."/ &gt;</span>  
+>    이 지시어는 파일이 명시적으로 기존 내장 `lib` 를 포함하게 합니다.  
+>    `TSConfig` 의 `lib` 옵션과 같은 방식으로 지정이 됩니다. 또한 내장 타입에 의존하는 `type declaration` 를 작성할때는 해당 지시어를 명시해주는 것이 권장됩니다.
+
 ## 💻 Namespace merging
 
 `Namespace` 는 `interface` 처럼 같은 식별자를 가진 것들 끼리 병합(merging)이 됩니다.
@@ -449,3 +461,10 @@ var Validation;
 ```
 
 `Validation` 객체안에 병합된 `class` 들이 지정되는 것을 볼 수 있습니다.
+
+#### 📔 참고자료
+
+[What is namespace in Typescript](https://www.geeksforgeeks.org/what-is-namespace-in-typescript/)  
+[How To Use Namespaces in TypeScript](https://www.digitalocean.com/community/tutorials/how-to-use-namespaces-in-typescript)  
+[TypeScript Namespaces](https://www.javatpoint.com/typescript-namespaces)  
+[What are triple-slash Directives in TypeScript?](https://www.geeksforgeeks.org/what-are-triple-slash-directives-in-typescript/)
