@@ -39,7 +39,123 @@ image:
 
 ## 💻 Global Custom Type Definition
 
+프로젝트 전역에서 공통으로 사용되는 타입이 있다고 가정해 보겠습니다. 이 타입을 전역에서 사용하기 위한 단계들을 살펴보겠습니다.
+
+1. `types` 디렉토리를 만든 후, 하위에 `common` 디렉토리를 생성합니다. 전역에서 공통으로 사용하는 타입들을 해당 디렉토리에 위치 시키겠습니다.  
+   ![global-custom-type-1](/assets/img/type-definition/global-custom-type-1.png)
+
+2. `types` 디렉토리를 `typeRoots` 옵션에 추가합니다.  
+    [`typeRoots`](https://ag502.github.io/posts/ts-config/#3%EF%B8%8F%E2%83%A3-typeroots) 에 해당 디렉토리를 추가함으로써, `TypeScript` 가 옵션에 명시된 디렉토리에서 타입을 참조하게 합니다.
+   `typeRoots` 의 기본값인 `node_modules/@types` 를 제외한 디렉토리를 지정할 때, `node_modules/@types` 는 포함되지 않습니다. 즉 기본값이더라도, 다시 옵션에 포함시켜야 합니다.
+
+   ```json
+   {
+     "files": ["./index.ts"],
+     "compilerOptions": {
+       "outDir": "./dist",
+       "typeRoots": ["node_modules/@types", "./types"]
+     }
+   }
+   ```
+
+3. `타입 선언 파일` 의 `entry file` 을 작성합니다.  
+    `타입 선언 파일` 을 찾는 방법도 `TypeScript` 의 [`Module Resolution Strategy`](https://ag502.github.io/posts/Module-Resolution/#-module-resolution-strategy) 와 유사합니다.  
+    따라서 `entry file` 의 이름이 `index.d.ts` 이거나, `package.json` 의 `types/typing` 필드가 `entry file` 을 가리켜야 합니다.
+
+   - `index.d.ts` 작성  
+      ![global-custom-type-2](/assets/img/type-definition/global-custom-type-2.png)
+
+     ```typescript
+     // index.d.ts
+
+     interface Shape {
+       kind: "circle" | "square";
+       radius?: number;
+       sideLength?: number;
+     }
+     ```
+
+     ```typescript
+     // index.ts
+
+     const circle: Shape = {
+       radius: 2 * Math.PI,
+     };
+     ```
+
+     위와 같이 `common` 디렉토리 하위에 `index.d.ts` 를 생성할 경우, 아래의 이미지처럼 정상적으로 타입 추론이 된것을 볼 수 있습니다.  
+     ![global-custom-type-3](/assets/img/type-definition/global-custom-type-3.png)
+
+   - `package.json` 작성  
+     위에서 작성한 `index.d.ts` 파일의 이름을 `main.d.ts` 로 수정해 보겠습니다.  
+     이 경우 `TypeScript` 는 `Module Resolution Strategy` 전략에 따라 `타입 선언 파일` 의 위치를 찾지 못해 `index.ts` 와 `TSConfig` 파일에 오류 메세지를 출력합니다.  
+     ![global-custom-type-5](/assets/img/type-definition/global-custom-type-5.png)
+
+     `Entry file` 의 이름이 `index.d.ts` 가 아닌 경우는 `package.json` 파일의 `types/typing` 필드에 `타입 선언 파일` 을 명시해 주어야 합니다.  
+     ![global-custom-type-4](/assets/img/type-definition/global-custom-type-4.png)
+
+     ```json
+     // package.json
+
+     {
+       "name": "common",
+       "version": "1.0.0",
+       "types": "./main.d.ts"
+     }
+     ```
+
 ## 💻 타입 선언 파일 모듈화
+
+만약 전역에서 공통으로 사용해야하는 타입들의 종류가 많다면 모듈화를 시켜야 합니다.
+
+![type-modularization-1](/assets/img/type-definition/type-modularization-1.png)
+
+```typescript
+// interface.d.ts
+
+interface Shape {
+  kind: "circle" | "square";
+  radius?: number;
+  sideLength?: number;
+}
+```
+
+```typescript
+// function.d.ts
+
+type getArea = (shape: Shape) => number | undefined;
+```
+
+위 예시는 `Shape` `interface` 를 `interface.d.ts` 파일로 분리시키고, `getArea` 함수의 타입을 `function.d.ts` 파일에 선언한 것 입니다.  
+이 `타입 선언 파일` 들을 `index.d.ts` 에 임포트 하기 위해서는 `Triple-Slash Directives` 를 사용해야 합니다.
+
+```typescript
+// index.d.ts
+
+/// <reference path="./interface.d.ts"/>
+/// <reference path="./function.d.ts" />
+```
+
+한가지 특이한 점은 `function.d.ts` 에서 `interface.d.ts` 에 선언된 `Shape` `interface` 를 사용하고 있다는 점입니다. 이는 `reference` 로 참조된 파일끼리는 값이나 타입을 공유할 수 있기 때문입니다.
+
+```typescript
+// index.ts
+
+const circle: Shape = {
+  kind: "circle",
+  radius: 2 * Math.PI,
+};
+
+const getArea: GetArea = (shape: Shape) => {
+  if (shape.kind === "circle") {
+    return Math.PI * shape.radius! ** 2;
+  }
+};
+
+console.log(getArea(circle));
+```
+
+전역으로 작성한 타입들을 이용해, 임포트 없이 타입을 사용하고 있음을 볼 수 있습니다.
 
 ## 💻 DefinitelyTyped / `@types`
 
