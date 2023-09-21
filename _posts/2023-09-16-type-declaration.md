@@ -157,9 +157,29 @@ console.log(getArea(circle));
 
 전역으로 작성한 타입들을 이용해, 임포트 없이 타입을 사용하고 있음을 볼 수 있습니다.
 
+#### 🖊 `import` 문을 사용하여 `타입 선언 파일` 가져오기
+
+> `index.d.ts` 파일에서 `import` 문으로 `타입 선언 파일` 을 가져올 수 있습니다.
+>
+> ```typescript
+> // index.d.ts;
+>
+> import "./interface";
+> import "./function";
+> ```
+>
+> 위 코드는 `reference` 를 사용하였던 앞선 코드와 같습니다.  
+> 단 `import` 문을 사용하면 `index.d.ts` 는 모듈이 되어 해당 파일에 선언한 타입들은 전역으로 사용할 수 없게됩니다.
+> 모듈 파일에서 전역 타입을 선언하는 방법은 아래에서 살펴보도록 하겠습니다.
+
 ## 💻 DefinitelyTyped / `@types`
 
+`DefinitelyTyped` 은 `JavaScript` 로 작성된 라이브러리의 `타입 선언 파일` 을 제공하고 있습니다.  
+`@types/[package]` 형식의 이름을 가지고 있으며, `node_modules/@types` 하위 경로에 설치 됩니다. 또한 `typeRoots` 옵션의 기본값이 `node_modules/@types` 이기 때문에, 설치 후 바로 타입이 인식됩니다.
+
 ## 💻 Ambient Declarations
+
+`Ambient` 란 '구현이 존재하지 않는(without actual implement)' 것을 말합니다. 즉,
 
 ### 👨‍💻 Ambient Namespace
 
@@ -172,4 +192,5 @@ console.log(getArea(circle));
 [Type Declarations](https://www.typescriptlang.org/docs/handbook/2/type-declarations.html)  
 [TypeScript Ambients Declaration](https://www.geeksforgeeks.org/typescript-ambients-declaration/)  
 [AMBIENT NAMESPACES IN DECLARATION FILES](https://lukasznojek.com/blog/2020/02/typescript-declaration-files/)  
-[TypeScript Ambient Module](https://elfi-y.medium.com/typescript-ambient-module-8816c9e5d426)
+[TypeScript Ambient Module](https://elfi-y.medium.com/typescript-ambient-module-8816c9e5d426)  
+[Mastering Declaration Files: The Key to TypeScript’s Type Magic](https://itnext.io/mastering-declaration-files-the-key-to-typescripts-type-magic-fe4483a86645)
