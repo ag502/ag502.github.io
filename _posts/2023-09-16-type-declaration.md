@@ -179,13 +179,242 @@ console.log(getArea(circle));
 
 ## 💻 Ambient Declarations
 
-`Ambient` 란 '구현이 존재하지 않는(without actual implement)' 것을 말합니다. 즉,
+`Ambient Declarations` 이란 다른 곳에 구현이 존재하는 코드의 타입을 정의하는 방법입니다.  
+예를 들어, `window` 의 경우 실행시점에 값이 존재하게 됩니다. 아래와 같이 `TSConfig` 의 `lib` 옵션을 `ES6` 로 지정하고 코드에 `window` 를 사용하려고 하면 타입오류가 발생합니다.
+
+```json
+{
+  "files": ["./index.ts"],
+  "compilerOptions": {
+    "outDir": "./dist",
+    "typeRoots": ["./types"],
+    "lib": ["ES6"]
+  }
+}
+```
+
+![ambient-declaration-1](/assets/img/type-definition/ambient-declaration-1.png)
+
+`window` 객체는 런타임에 존재하는 값(다른 곳에 구현이 존재)이어서, 프로젝트내에 따로 값을 정의하지 않았기 때문입니다.  
+따라서 `declare` 이라는 키워드를 사용해 `TypeScript` 에게 `window` 라는 값이 런타임에 존재하는 값임을 알려야 합니다.
+
+> declare var window: any
+
+위의 코드는 `window` 객체를 `any` 타입으로 선언한 `ambient declaration` 의 예시입니다.  
+타입이 `any` 이기때문에 `window` 에 어떤값을 할당해도 오류가 발생하지 않습니다.
+
+#### 🖊 `Window` 타입
+
+> `window` 객체는 `lib.dom.ts` 에 아래와 같이 타입이 정의되어 있습니다.
+>
+> ```typescript
+> declare var window: Window & typeof globalThis;
+> ```
+>
+> 만약 `window` 객체에 추가적인 함수나 값을 추가하고 싶다면 `interface` 병합을 사용해 타입을 추가할 수 있습니다.
+>
+> ```typescript
+> interface Window {
+>   helloWorld(): void;
+> }
+>
+> window.helloWorld();
+> ```
 
 ### 👨‍💻 Ambient Namespace
 
+앞서 살펴본 `Global Custom Type Definition` 에서 전역으로 선언했던 타입들의 이름은 다른 타입들과 이름이 겹칠 가능성이 있습니다.  
+예를 들어, `Shape` 인터페이스를 3rd party library 에서 사용하고 있다면, 의도치 않은 `interface` 병합이 발생할 수도 있습니다.
+`Ambient namespace` 를 사용하면 이런 현상을 막을 수 있습니다.
+
+```typescript
+// interface.d.ts
+
+declare namespace Common {
+  interface Shape {
+    kind: "circle" | "square";
+    radius?: number;
+    sideLength?: number;
+  }
+}
+```
+
+```typescript
+// function.d.ts
+
+declare namespace Common {
+  type getArea = (shape: Shape) => number | undefined;
+}
+```
+
+추가로 `Ambient namespace` 내부에 선언된 타입들은 따로 `export` 하지 않아도 암시적으로 `export` 가 됩니다.
+
+### 👨‍💻 `declare global`
+
+`interface` 와 `namespace` 모두 병합(merge)이 되는 특성이 있습니다. 이 특성을 이용해 타입을 보강할 수 있습니다.
+
+```typescript
+// index.ts
+
+interface Shape {
+  name: string;
+}
+
+const circle: Shape = {
+  kind: "circle",
+};
+```
+
+위 예시는 전역으로 선언된 `Shape` `interface` 에 `string` 타입의 `name` 속성을 추가한 것입니다. `name` 속성이 필수로 지정되었기 때문에 `circle` 변수는 타입오류가 발생합니다.
+
+![ambient-declaration-2](/assets/img/type-definition/ambient-declaration-2.png)
+
+한가지 유의할 점은, 병합은 `module` 파일에서는 발생하지 않는다는 점입니다.
+
+```typescript
+// index.ts
+
+interface Shape {
+  name: string;
+}
+
+const circle: Shape = {
+  kind: "circle",
+};
+
+export {};
+```
+
+위 코드는 `export {}` 를 추가해 `index.ts` 를 `module` 파일로 만든 것 입니다. 앞에서 살펴본 예시와 마찬가지로 타입오류가 발생하지만, 다른 유형의 오류가 발생합니다.
+
+![ambient-declaration-3](/assets/img/type-definition/ambient-declaration-3.png)
+
+`kind` 속성이 `Shape` `interface` 에 존재하지 않는다는 오류가 발생합니다. 이는 `index.ts` 파일이 `module` 파일로 전환되어 전역으로 선언된 `Shape` `interface` 와 지역적으로 선언된 `Shape` `interface` 가 병합되지 않았기 때문입니다. 따라서 `circle` 에 지정된 `Shape` 은 로컬에 선언된 `Shape` `interface` 만을 의미합니다.
+
+`module` 파일에 선언된 타입을 전역으로 선언하거나, 전역으로 선언된 타입과 병합하려면 `declare global` 을 사용하면 됩니다.
+
+```typescript
+// index.ts
+
+declare global {
+  interface Shape {
+    name: string;
+  }
+}
+
+const circle: Shape = {
+  kind: "circle",
+};
+
+export {};
+```
+
+`Shape` `interface` 를 `declare global` 로 감싸주면 해당 타입은 전역으로 선언되어 정상적으로 병합됨을 볼 수 있습니다.
+
 ### 👨‍💻 Ambient Module
 
-## 💻 3rd Party Library Custom Type Definition
+`JavaScript` 로 작성된 라이브러리 중에서 `Definitely Typed` 에 `타입 선언 파일` 이 존재하지 않는 경우, 직접 `타입 선언 파일` 을 작성해야 합니다.
+
+아래와 같은 구조를 가진 프로젝트가 있습니다.
+
+![ambient-declaration-4](/assets/img/type-definition/ambient-declaration-4.png)
+
+`packages` 디렉토리를 `node_modules` 로 가정하게 되면, `vehicle` 디렉토리는 설치된 라이브러리로 생각할 수 있습니다.  
+`node_modules` 에 설치된 라이브러리처럼 비-상대 경로로 임포트하기 위해 `TSConfig` 의 [`baseURL`](https://ag502.github.io/posts/ts-config/#7%EF%B8%8F%E2%83%A3-baseurl) 옵션을 지정하겠습니다.
+
+```json
+{
+  "files": ["./index.ts"],
+  "compilerOptions": {
+    "outDir": "./dist",
+    "typeRoots": ["./types"],
+    "baseUrl": "./packages"
+  }
+}
+```
+
+아래의 `vehicle.js` 코드를 `index.ts` 에 임포트 해보겠습니다.
+
+```javascript
+// vehicle.js
+
+export class Vehicle {
+  static name = "Vehicle";
+
+  constructor(model, year, price) {
+    this.model = model;
+    this.year = year;
+    this.price = price;
+  }
+
+  drive() {
+    console.log("The vehicle is moving");
+  }
+
+  stop() {
+    console.log("The vehicle stopped");
+  }
+}
+
+export function getVehicleInfo(vehicle) {
+  return `model: ${vehicle.model}, year: ${vehicle.year} price: ${vehicle.price}`;
+}
+
+export default "v1.0.0";
+```
+
+```typescript
+// index.ts
+
+import version, { Vehicle, getVehicleInfo } from "vehicle";
+
+console.log(version);
+
+const car: Vehicle = new Vehicle("car", 2023, 1000);
+
+console.log(Vehicle.name);
+
+car.drive();
+car.stop();
+
+const currentInfo = getVehicleInfo(car);
+
+console.log(currentInfo);
+```
+
+`index.ts` 에 'vehicle' 을 임포트한 후 정의된 함수와 값을 사용하면, 해당 패키지의 `타입 선언 파일` 이 없기때문에 타입 추론이 정상적으로 되지 않는것을 알 수 있습니다.
+
+타입 추론이 정상적으로 동작하게끔 하기위해 `types` 디렉토리 하위에 `타입 선언 파일` 을 만들어 보겠습니다.
+
+```typescript
+// types/vehicle/index.d.ts
+
+declare module "vehicle" {
+  export class Vehicle {
+    static name: string;
+
+    public model: string;
+    public year: number;
+    public price: number;
+
+    constructor(model: string, year: number, price: number);
+
+    drive(): void;
+    stop(): void;
+  }
+
+  var version: string;
+  export default version;
+}
+
+declare module "vehicle" {
+  export function getVehicleInfo(vehicle: Vehicle): string;
+}
+```
+
+위의 `타입 선언 파일` 을 추가하면 `index.ts` 의 타입 추론이 정상적으로 동작하게 됩니다.
+
+`declare module "[module-name]"` 키워드를 `ambient module` 이라고 하며, 해당 모듈이 런타임시에 제공됨을 `TypeScript` 에게 알려주는 역할을 합니다.
 
 #### 📗 참고자료
 
@@ -193,4 +422,6 @@ console.log(getArea(circle));
 [TypeScript Ambients Declaration](https://www.geeksforgeeks.org/typescript-ambients-declaration/)  
 [AMBIENT NAMESPACES IN DECLARATION FILES](https://lukasznojek.com/blog/2020/02/typescript-declaration-files/)  
 [TypeScript Ambient Module](https://elfi-y.medium.com/typescript-ambient-module-8816c9e5d426)  
-[Mastering Declaration Files: The Key to TypeScript’s Type Magic](https://itnext.io/mastering-declaration-files-the-key-to-typescripts-type-magic-fe4483a86645)
+[Mastering Declaration Files: The Key to TypeScript’s Type Magic](https://itnext.io/mastering-declaration-files-the-key-to-typescripts-type-magic-fe4483a86645)  
+[Library Structures](https://www.typescriptlang.org/ko/docs/handbook/declaration-files/library-structures.html)  
+[Modules .d.ts](https://www.typescriptlang.org/docs/handbook/declaration-files/templates/module-d-ts.html)
