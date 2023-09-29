@@ -19,7 +19,7 @@ image:
 
 이 속성들은 물체 변형과 관련된 속성으로, 적절한 값을 지정해 변형을 줄 수 있습니다.
 
-## 💻 물체 이동
+## 💻 이동
 
 `Object3D` 의 `position` 속성을 이용해 물체를 이동시킬 수 있습니다.  
 `position` 속성은 `Vector3` 라는 타입을 갖습니다. `Vector3` 클래스는 3차원 벡터를 의미합니다. 즉 3차원 공간에서의 좌표와, 벡터의 방향 및 크기를 나타냅니다.
@@ -116,7 +116,105 @@ scene.add(axesHelper);
 
   `normalize` 함수를 실행한 후 `mesh` 의 원점과의 거리가 1 이 되었음을 볼 수 있습니다.
 
+## 💻 확대/축소
+
+`Object3D` 의 `scale` 속성을 이용해 물체를 확대하거나 축소할 수 있습니다.  
+`position` 과 마찬가지로 `Vector3` 을 타입으로 가지며, 기본값은 `(1, 1, 1)` 입니다.
+
+## 💻 회전
+
+`three.js` 에는 물체를 회전시키는 방법으로 `rotation` 속성을 이용하거나, `quaternion` 속성을 이용하는 방법이 있습니다.
+
+### 👨‍💻 `rotation`
+
+`rotation` 속성은 `position`, `scale` 속성과는 다르게 `Euler` 타입을 갖습니다. `rotation` 을 이용해 회전시킬 때는 오일러 각(Euler Angle)을 사용하기 때문입니다.  
+`Euler` 클래스는 오일러 각을 표현하기 위한 클래스 이며, `Vector3` 와 마찬가지로 `x`, `y`, `z` 속성을 가집니다.
+
+오일러 각을 이용한 회전은, 물체에 가운데를 관통하는 축이 있다고 가정하고 그 축을 기준으로 회전시키는 방식입니다.
+
+![rotation-1](/assets/img/three-js-transform/rotation-1.png)
+
+위 그림은 각각 각 축에 대해 `mesh.rotation.x = Math.PI * 0.25` 를 실행한 결과 입니다. 축을 기준으로 지정한 각도(라디안) 만큼 반시계 방향으로 회전한 것을 알 수 있습니다.
+
+이 방식의 문제점은 물체의 축을 기준으로 회전시킬 때, 다른 축도 같이 움직인다는 것입니다. 이로인해, 회전을 수행하는 순서에 따라 결과가 달라지거나, 특정 경우에 축이 회전에 무감되는 현상(`gimbal lock`) 이 발생하게 됩니다.  
+이 현상을 해결하기 위해서는, 원하는 결과를 얻기 위해 `reorder` 라는 함수로 회전순서를 지정해주거나 `quaternion` 을 사용해 회전시주어야 합니다.
+
+#### 🖊 `Euler.reorder`
+
+> 오일러 각을 바탕으로 물체를 회전 시킬때, 회전 순서를 지정해주는 함수입니다.
+> 기본값은 `XYZ` 로 코드상에서 회전 순서를 임의로 지정해도 항상 X -> Y -> Z 순으로 회전이 발생합니다.
+>
+> ```javascript
+> mesh.rotation.x = Math.PI * 0.25;
+> mesh.rotation.y = Math.PI * 0.25;
+> mesh.rotation.z = Math.PI * 0.25;
+> ```
+>
+> ```javascript
+> mesh.rotation.z = Math.PI * 0.25;
+> mesh.rotation.x = Math.PI * 0.25;
+> mesh.rotation.y = Math.PI * 0.25;
+> ```
+>
+> 위 두 코드의 결과는 회전축 순서를 변경하지 안는한 항상 같은 결과가 나옵니다.
+
+### 👨‍💻 `quaternion`
+
+오일러 각을 이용한 회전의 문제점을 해결할 수 있는 회전방식입니다.
+
+### 👨‍💻 `lookAt`
+
+이 메소드를 사용하면, `Object3D` 를 특정 방향을 바라보도록(look at) 지정할 수 있습니다.
+
+```javascript
+// ...생략...
+mesh.lookAt(-1, 0, 0);
+// ...생략...
+```
+
+위 코드를 실행한 결과는 아래와 같습니다.
+
+![look-at](/assets/img/three-js-transform/look-at-1.png)
+
+`z` 축이 지정한 좌표를 향하고 있음을 알 수 있습니다.
+
+해당 메소드는 `camera` 가 물체의 한 가운데를 바라보게 할 때에도 사용할 수 있습니다.
+
+```javascript
+// ...생략...
+camera.lookAt(mesh.position);
+// ...생략...
+```
+
+## 💻 그룹
+
+`Group` 클래스는 `Object3D` 클래스를 상속받는 클래스로, `Object3D` 객체들을 그룹화 시켜주는 역할을 합니다.  
+그룹으로 지정된 객체들은 함께 변형이 됩니다.
+
+```javascript
+// ...생략...
+const group = new THREE.Group();
+scene.add(group);
+
+const boxGeometry = new THREE.BoxGeometry(1, 1, 1);
+const redMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+
+const redCube1 = new THREE.Mesh(boxGeometry, redMaterial);
+group.add(redCube1);
+
+const redCube2 = new THREE.Mesh(boxGeometry, redMaterial);
+group.add(redCube2);
+
+const redCube3 = new THREE.Mesh(boxGeometry, redMaterial);
+group.add(redCube3);
+// ...생략...
+```
+
+위 코드는 `redCube1`, `redCube2`, `redCube3` 을 하나의 그룹으로 묶어놓은 예시입니다. 그룹에 포함된 객체들은 모두 함께 움직이게 됩니다.
+
 #### 📔 참고자료
 
 [Object3D](https://threejs.org/docs/#api/en/core/Object3D)  
-[Vector3](https://threejs.org/docs/index.html#api/en/math/Vector3)
+[Vector3](https://threejs.org/docs/index.html#api/en/math/Vector3)  
+[Euler](https://threejs.org/docs/index.html#api/en/math/Euler)  
+[Quaternion](https://threejs.org/docs/#api/en/math/Quaternion)
