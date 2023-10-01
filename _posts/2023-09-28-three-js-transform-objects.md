@@ -1,6 +1,6 @@
 ---
 title: three.js 물체 변형하기
-date: 2023-09-27
+date: 2023-09-28
 categories: [three.js, WebGL]
 tags: [three.js]
 image:
