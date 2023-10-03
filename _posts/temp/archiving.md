@@ -42,31 +42,32 @@
 
 # React
 
-|                                                                               제목                                                                                | 읽음 | 정리 |
-| :---------------------------------------------------------------------------------------------------------------------------------------------------------------: | :--: | :--: |
-|                                                         [React Visual Guide](https://react.gg/visualized)                                                         |  ❌  |  ❌  |
-|                             [The Interactive Guide to Rendering in React](https://ui.dev/c/react/renders?ck_subscriber_id=1747639579)                             |  ❌  |  ❌  |
-|                                                        [Managing Effects](https://ui.dev/c/react/effects)                                                         |  ❌  |  ❌  |
-|                       [HEADLESS USER INTERFACE COMPONENTS](https://www.merrickchristensen.com/articles/headless-user-interface-components/)                       |  ❌  |  ❌  |
-|                         [Modularizing React Applications with Established UI Patterns](https://velog.io/@eunbinn/modularizing-react-apps)                         |  ❌  |  ❌  |
-|                           [Strongly Type useRef with ElementRef](https://www.totaltypescript.com/strongly-type-useref-with-elementref)                            |  ❌  |  ❌  |
-|         [Partially Controlled Components: A Declarative Design Pattern in React](https://www.jameskerr.blog/posts/partially-controlled-react-components/)         |  ❌  |  ❌  |
-|                              [Understanding React Server Components](https://vercel.com/blog/understanding-react-server-components)                               |  ❌  |  ❌  |
-|                                                 [Sending UI over APIs](https://www.builder.io/blog/ui-over-apis)                                                  |  ❌  |  ❌  |
-|                             [Fantastic closures and how to find them in React](https://www.developerway.com/posts/fantastic-closures)                             |  ❌  |  ❌  |
-|                                                      [useMemo overdose](https://edvins.io/usememo-overdose)                                                       |  ❌  |  ❌  |
-|                                  [Implement Radix's asChild pattern in React](https://www.jacobparis.com/content/react-as-child)                                  |  ❌  |  ❌  |
-|             [The underlying mechanisms of React’s concurrent mode](https://andreigatej.dev/blog/the-underlying-mechanisms-of-reacts-concurrent-mode/)             |  ❌  |  ❌  |
-|                [Building a Design System with React Web Components](https://www.voorhoede.nl/en/blog/building-design-system-react-web-components/)                |  ❌  |  ❌  |
-|                        [Writing composable CSS components for React](https://blog.logrocket.com/writing-composable-css-components-react/)                         |  ❌  |  ❌  |
-|              [Why-react-rerenders-and-when-to-worry-about-it](https://punits.dev/jargon-free-intros/why-react-rerenders-and-when-to-worry-about-it/)              |  ❌  |  ❌  |
-|             [The underlying mechanisms of React's concurrent mode](https://andreigatej.dev/blog/the-underlying-mechanisms-of-reacts-concurrent-mode/)             |  ❌  |  ❌  |
-|                    [Making Sense of React Server Components](https://www.joshwcomeau.com/react/server-components/?ck_subscriber_id=2075819971)                    |  ❌  |  ❌  |
-|                    [Parents & Owners in React: Data Flow](https://julesblom.com/writing/parents-owners-data-flow?ck_subscriber_id=2075819971)                     |  ❌  |  ❌  |
-| [Challenging Established Norms: Making Component Fetching the Exception](https://jjenzz.com/making-component-fetching-the-exception/?ck_subscriber_id=2075819971) |  ❌  |  ❌  |
-|                            [How to Pass a Component as a Prop in React](https://www.totaltypescript.com/pass-component-as-prop-react)                             |  ❌  |  ❌  |
-|                  [Build your own headless UI components](https://www.jacobparis.com/content/react-headless-submenus?ck_subscriber_id=2075819971)                  |  ❌  |  ❌  |
-|                               [Strongly Typing React Props with TypeScript](https://www.totaltypescript.com/react-props-typescript)                               |  ❌  |  ❌  |
+|                                                                                제목                                                                                 | 읽음 | 정리 |
+| :-----------------------------------------------------------------------------------------------------------------------------------------------------------------: | :--: | :--: |
+|                                                          [React Visual Guide](https://react.gg/visualized)                                                          |  ❌  |  ❌  |
+|                              [The Interactive Guide to Rendering in React](https://ui.dev/c/react/renders?ck_subscriber_id=1747639579)                              |  ❌  |  ❌  |
+|                                                         [Managing Effects](https://ui.dev/c/react/effects)                                                          |  ❌  |  ❌  |
+|                        [HEADLESS USER INTERFACE COMPONENTS](https://www.merrickchristensen.com/articles/headless-user-interface-components/)                        |  ❌  |  ❌  |
+|                          [Modularizing React Applications with Established UI Patterns](https://velog.io/@eunbinn/modularizing-react-apps)                          |  ❌  |  ❌  |
+|                            [Strongly Type useRef with ElementRef](https://www.totaltypescript.com/strongly-type-useref-with-elementref)                             |  ❌  |  ❌  |
+|          [Partially Controlled Components: A Declarative Design Pattern in React](https://www.jameskerr.blog/posts/partially-controlled-react-components/)          |  ❌  |  ❌  |
+|                               [Understanding React Server Components](https://vercel.com/blog/understanding-react-server-components)                                |  ❌  |  ❌  |
+|                                                  [Sending UI over APIs](https://www.builder.io/blog/ui-over-apis)                                                   |  ❌  |  ❌  |
+|                              [Fantastic closures and how to find them in React](https://www.developerway.com/posts/fantastic-closures)                              |  ❌  |  ❌  |
+|                                                       [useMemo overdose](https://edvins.io/usememo-overdose)                                                        |  ❌  |  ❌  |
+|                                   [Implement Radix's asChild pattern in React](https://www.jacobparis.com/content/react-as-child)                                   |  ❌  |  ❌  |
+|              [The underlying mechanisms of React’s concurrent mode](https://andreigatej.dev/blog/the-underlying-mechanisms-of-reacts-concurrent-mode/)              |  ❌  |  ❌  |
+|                 [Building a Design System with React Web Components](https://www.voorhoede.nl/en/blog/building-design-system-react-web-components/)                 |  ❌  |  ❌  |
+|                         [Writing composable CSS components for React](https://blog.logrocket.com/writing-composable-css-components-react/)                          |  ❌  |  ❌  |
+|               [Why-react-rerenders-and-when-to-worry-about-it](https://punits.dev/jargon-free-intros/why-react-rerenders-and-when-to-worry-about-it/)               |  ❌  |  ❌  |
+|              [The underlying mechanisms of React's concurrent mode](https://andreigatej.dev/blog/the-underlying-mechanisms-of-reacts-concurrent-mode/)              |  ❌  |  ❌  |
+|                     [Making Sense of React Server Components](https://www.joshwcomeau.com/react/server-components/?ck_subscriber_id=2075819971)                     |  ❌  |  ❌  |
+|                     [Parents & Owners in React: Data Flow](https://julesblom.com/writing/parents-owners-data-flow?ck_subscriber_id=2075819971)                      |  ❌  |  ❌  |
+|  [Challenging Established Norms: Making Component Fetching the Exception](https://jjenzz.com/making-component-fetching-the-exception/?ck_subscriber_id=2075819971)  |  ❌  |  ❌  |
+|                             [How to Pass a Component as a Prop in React](https://www.totaltypescript.com/pass-component-as-prop-react)                              |  ❌  |  ❌  |
+|                   [Build your own headless UI components](https://www.jacobparis.com/content/react-headless-submenus?ck_subscriber_id=2075819971)                   |  ❌  |  ❌  |
+|                                [Strongly Typing React Props with TypeScript](https://www.totaltypescript.com/react-props-typescript)                                |  ❌  |  ❌  |
+| [Deep dive into React's virtual DOM and reconciliation](https://borstch.com/blog/deep-dive-into-reacts-virtual-dom-and-reconciliation/?ck_subscriber_id=1747639579) |  ❌  |  ❌  |
 
 # Vue
 
