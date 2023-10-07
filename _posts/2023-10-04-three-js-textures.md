@@ -203,8 +203,124 @@ loadingManager.onProgress = (url, itemsLoaded, itemsTotal) => {
 
 ![loadingManager-1](/assets/img/three-js-texture/loadingManager-1.png)
 
+## 💻 UV Mapping
+
+`UV mapping` 은 2D 이미지를 3D 물체의 표면으로 투영하는 과정으로, 평면인 `texture` 를 3D인 `mesh` 에 적용시키기 위해 사용하는 프로세스 입니다.
+또한 `UV mapping` 을 진행하기 위해서는 `mesh` 를 전개도와 비슷한 평면으로 변환(`UV Map`)시켜주는 과정이 필요한데 이 과정을 `UV unwrapping` 이라고 합니다.
+
+### 👨‍💻 UV 좌표계
+
+`UV mapping`, `UV unwrapping` 에 언급된 `UV` 는 `mesh` 의 정점들(vertices)에 저장된 2D `texture` 의 좌표를 의미합니다.  
+보통 `openGL` 에서는 `U` 는 가로축, `V` 는 세로축을 의미하지만 이는 사용하는 도구에 따라 상이합니다. 또한 각축의 최솟값은 `0`, 최댓값은 `1` 입니다.
+
+![uv-coordinate](/assets/img/three-js-texture/uv-coordinate.png)
+
+위 그림은 `texture` 의 `UV` 좌표계를 나타낸 것이며, 아래는 해당 `texture` 를 `BoxGeometry` 의 한 면에 `UV` 좌표에 따라 적용시킨 예시입니다.
+
+![uv-mapping](/assets/img/three-js-texture/uv-mapping.png)
+
+`BoxGeometry` 의 각 정점들에 할당된 `UV` 좌표에 해당하는 `texture` 가 적용되었습니다. 또한 `UV` 의 좌표의 최댓값보다 큰 좌표가 할당 되었을 경우, 빈공간을 채우기위해 반복되었음을 알 수 있습니다. 하지만 이는 설정에따라 달라집니다.
+
+## 💻 texture 변형하기
+
+### 👨‍💻 repeat
+
+`UV` 좌표계의 축 방향으로 `texture` 를 얼마나 반복시킬 것인지 설정하는 옵션입니다.  
+`Vector2` 타입을 가지고 있으며, 1보다 큰 값을 설정하게되면 `wrap` 속성(`wrapS`, `wrapT`) 에 `THREE.RepeatWrapping` 이나 `THREE.MirroredRepeatWrapping` 을 추가로 지정해 주어야 합니다.
+
+```javascript
+// ...생략...
+const loadingManager = new THREE.LoadingManager();
+const textureLoader = new THREE.TextureLoader(loadingManager);
+const texture = textureLoader.load("image-path");
+
+texture.repeat.x = 3;
+
+// ...생략...
+```
+
+아래 이미지는 위 코드를 실행시킨 결과 입니다.
+
+![texture-repeat-1](/assets/img/three-js-texture/texture-repeat-1.png)
+
+`U` (`x`) 축 방향으로 늘어나기만 할 뿐, 반복되지 않았음을 알 수 있습니다. 따라서 `wrapS` 에 `THREE.RepeatWrapping` 속성을 지정해야 합니다.
+
+```javascript
+// ...생략...
+const loadingManager = new THREE.LoadingManager();
+const textureLoader = new THREE.TextureLoader(loadingManager);
+const texture = textureLoader.load("image-path");
+
+texture.repeat.x = 3;
+texture.wrapS = THREE.RepeatWRapping;
+
+// ...생략...
+```
+
+![texture-repeat-2](/assets/img/three-js-texture/texture-repeat-2.png)
+
+만약 `wrap` 프로퍼티에 `THREE.MirroredRepeatWrapping` 을 설정해주게 되면, 매 반복시 `texture` 가 반전됩니다.
+
+### 👨‍💻 offset
+
+`UV` 좌표계의 축 방향으로 `mesh` 에 적용될 `texture` 의 `offset` 을 설정해 줍니다.  
+`Vector2` 타입을 가집니다.
+
+```javascript
+// ...생략...
+const loadingManager = new THREE.LoadingManager();
+const textureLoader = new THREE.TextureLoader(loadingManager);
+const texture = textureLoader.load("image-path");
+
+texture.repeat.x = 3;
+texture.wrapS = THREE.RepeatWRapping;
+
+texture.offset.x = 0.5;
+
+// ...생략...
+```
+
+위 코드는 `x` 축 방향으로 `texture` 를 3번 반복한 후, `offset` 을 0.5로 설정 한 코드 이며 결과는 아래와 같습니다.
+
+![texture-offset-1](/assets/img/three-js-texture/texture-offset-1.png)
+
+### 👨‍💻 rotation
+
+`texture` 가 중점을 중심으로 얼마나 회전할지를 결정하는 속성입니다.  
+중점은 `center` 속성을 통해 설정해 줄 수 있으며, 기본값은 `UV` 좌표로 `(0, 0)` 즉 왼쪽 아래가 됩니다.
+
+```javascript
+// ...생략...
+const loadingManager = new THREE.LoadingManager();
+const textureLoader = new THREE.TextureLoader(loadingManager);
+const texture = textureLoader.load("image-path");
+
+texture.repeat.x = 3;
+texture.wrapS = THREE.RepeatWrapping;
+
+texture.rotation = Math.PI * 0.25;
+```
+
+위 예시는 `texture` 를 `𝛑/4` 만큼 회전시키는 코드이며, 결과는 아래와 같습니다.
+
+![texture-rotation-1](/assets/img/three-js-texture/texture-rotation-1.png)
+
+`UV` 좌표계에서 `(0, 0)` 즉 왼쪽 아래를 중심으로 회전이 되었고, 그로인해 생긴 빈공간을 채우기위해 `texture` 가 늘어난것을 볼 수 있습니다.
+
+```javascript
+// ...생략...
+texture.center.x = 0.5;
+texture.center.y = 0.5;
+// ...생략...
+```
+
+위와 같이 중심을 면의 한 가운데로 옮기게 되면, 해당 좌표를 중심으로 회전하게 됩니다.
+
 #### 📔 참고자료
 
 [How to make photorealistic 3D graphics with different texture maps?](https://www.webdew.com/blog/how-to-make-photorealistic-3d-graphics)  
 [A Brief Introduction to Texture mapping for 3D Artists](https://professional3dservices.com/blog/texture-mapping-guide.html)  
-[Texture Maps: The Ultimate Guide For 3D Artists](https://conceptartempire.com/texture-maps/)
+[Texture Maps: The Ultimate Guide For 3D Artists](https://conceptartempire.com/texture-maps/)  
+[UV Unwrapping](https://learn.foundry.com/nuke/content/comp_environment/modelbuilder/uv_unwrapping.html)  
+[What is UV Mapping & Unwrapping? (full beginners guide)](https://inspirationtuts.com/what-is-uv-mapping-and-unwrapping/)  
+[\[포프의 쉐이더 입문강좌\] 03. 텍스처매핑 Part 1](https://blog.popekim.com/ko/2011/12/12/intro-to-shader-03-texture-mapping-part-1.html)
