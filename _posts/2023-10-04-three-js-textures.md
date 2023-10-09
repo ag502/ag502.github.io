@@ -316,6 +316,63 @@ texture.center.y = 0.5;
 
 위와 같이 중심을 면의 한 가운데로 옮기게 되면, 해당 좌표를 중심으로 회전하게 됩니다.
 
+## 💻 Mips and Filtering
+
+![mip-map-1](/assets/img/three-js-texture/mip-map-1.png)
+
+위 이미지는 `PlaneGeometry` 에 `16x16` 크기의 `texture` 를 적용한 후, `camera` 를 `mesh` 와 거의 평행하게 위치시킨 모습입니다.
+`Camera` 에서 멀리 떨어진 `texture` 일수록 흐려지는 현상을 볼 수 있는데 이는 `filter` 과 `mip mapping` 때문입니다.
+
+### 👨‍💻 Mip mapping
+
+`Mip mapping` 은 렌더링 성능을 최적화 하기 위해, 원본 `texture` 의 크기를 축소시킨 `texture` 들의 복사본들(`mips`)의 집합(`mip map`)을 사전에 만드는 과정을 의미합니다.
+
+![mipmap-low-res-enlarged](/assets/img/three-js-texture/mipmap-low-res-enlarged.png)
+
+위 그림은 `16 x 16` 크기의 원본 `texture` 를 축소시킨 `mip map` 입니다.  
+`16 x 16` ⇒ `8 x 8` ⇒ `4 x 4` ⇒ `2 x 2` ⇒ `1 x 1` 와 같이 높이와 넓이를 절반으로 줄여가며 축소시킨것을 알 수 있으며, `1 x 1` 크기의 `mip` 을 얻을 때 까지 축소시킨다는 것을 알 수 있습니다.
+
+### 👨‍💻 Filtering
+
+렌더링 해야하는 `texture` 가 원본 크기보다 크거나, 작을 경우 원본 그대로 렌더링할 수 없습니다. 이 경우 렌더링해야하는 적절한 픽셀값을 결정해야 하는데 이 과정을 `filtering` 이라고 합니다.
+
+#### 🖊 Magnification Filter
+
+`texture` 의 크기가 원본 보다 커져야 하는 경우, 즉 `texture` 가 `mesh` 보다 작을 경우 사용하는 `filter` 입니다.
+
+- `LinearFilter`  
+  가장 가까운 4개의 픽셀을 골라, 각 픽셀의 실제 거리에 따라 적절한 비율로 섞는 방식입니다.  
+  `three.js` 에서는 기본값으로 적용되어 있습니다.
+
+  ```javascript
+  // ...생략...
+  const texture = textureLoader.load("small-image-path");
+  texture.magFilter = THREE.LinearFilter;
+  // ...생략...
+  ```
+
+  위 코드는 아주 작은 이미지를 `texture` 로 불러온 후, `magnification filter` 로 `LinearFilter` 를 적용해준 코드로, 결과는 아래와 같습니다.
+
+  ![mag-linear-filter](/assets/img/three-js-texture/mag-linear-filter-1.png)
+
+- `NearestFilter`  
+  `texture` 에서 가장 가까운 픽셀을 골라 렌더링 합니다. 해상도가 낮은 `texture` 에 적용할 경우 픽셀화 됩니다.
+
+  ```javascript
+  // ...생략...
+  const texture = textureLoader.load("small-image-path");
+  texture.magFilter = THREE.NearestFilter;
+  // ...생략...
+  ```
+
+  위 예시는 `NearestFilter` 를 적용한 코드이고 결과는 아래와 같습니다.
+
+  ![mag-nearest-filter-1](/assets/img/three-js-texture/mag-nearest-filter-1.png)
+
+  `texture` 각 픽셀화 된 것을 볼 수 있습니다.
+
+#### 🖊 Minification Filter
+
 #### 📔 참고자료
 
 [How to make photorealistic 3D graphics with different texture maps?](https://www.webdew.com/blog/how-to-make-photorealistic-3d-graphics)  
@@ -323,4 +380,5 @@ texture.center.y = 0.5;
 [Texture Maps: The Ultimate Guide For 3D Artists](https://conceptartempire.com/texture-maps/)  
 [UV Unwrapping](https://learn.foundry.com/nuke/content/comp_environment/modelbuilder/uv_unwrapping.html)  
 [What is UV Mapping & Unwrapping? (full beginners guide)](https://inspirationtuts.com/what-is-uv-mapping-and-unwrapping/)  
-[\[포프의 쉐이더 입문강좌\] 03. 텍스처매핑 Part 1](https://blog.popekim.com/ko/2011/12/12/intro-to-shader-03-texture-mapping-part-1.html)
+[\[포프의 쉐이더 입문강좌\] 03. 텍스처매핑 Part 1](https://blog.popekim.com/ko/2011/12/12/intro-to-shader-03-texture-mapping-part-1.html)  
+[What is mipmap technique and what's the benefit of using it in rendering?](https://developer.arm.com/documentation/ka005281/latest/)
