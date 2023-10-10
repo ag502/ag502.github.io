@@ -338,9 +338,10 @@ texture.center.y = 0.5;
 
 #### 🖊 Magnification Filter
 
-`texture` 의 크기가 원본 보다 커져야 하는 경우, 즉 `texture` 가 `mesh` 보다 작을 경우 사용하는 `filter` 입니다.
+`texture` 의 크기가 원본 보다 커져야 하는 경우, 즉 원본 `texture` 가 `mesh` 보다 작을 경우 사용하는 `filter` 입니다.  
+이 상황에는 `texel` (`texture` 의 1px) 이 하나 이상의 픽셀을 커버해야 합니다.
 
-- `LinearFilter`  
+- `THREE.LinearFilter`  
   가장 가까운 4개의 픽셀을 골라, 각 픽셀의 실제 거리에 따라 적절한 비율로 섞는 방식입니다.  
   `three.js` 에서는 기본값으로 적용되어 있습니다.
 
@@ -355,7 +356,7 @@ texture.center.y = 0.5;
 
   ![mag-linear-filter](/assets/img/three-js-texture/mag-linear-filter-1.png)
 
-- `NearestFilter`  
+- `THREE.NearestFilter`  
   `texture` 에서 가장 가까운 픽셀을 골라 렌더링 합니다. 해상도가 낮은 `texture` 에 적용할 경우 픽셀화 됩니다.
 
   ```javascript
@@ -372,6 +373,47 @@ texture.center.y = 0.5;
   `texture` 각 픽셀화 된 것을 볼 수 있습니다.
 
 #### 🖊 Minification Filter
+
+`texture` 가 원본보다 작아져야 할 경우, 즉 원본 `texture` 가 `mesh` 보다 클 경우 사용하는 `filter` 입니다.  
+이 경우는 `texel` 이 최대 한개의 픽셀을 커버하게 됩니다.
+
+- `THREE.NearestFilter`  
+  `Magnification filter` 와 마찬가지로 가장 가까운 픽셀을 골라 렌더링 합니다.
+
+- `THREE.LinearFilter`  
+  `Magnification filter` 와 마찬가지로 주변의 가까운 픽셀 4개을 골라 적절한 비율로 섞습니다.
+
+- `THREE.NearestMipmapNearestFilter`  
+  적절한 `mip` 을 고른 후, `mip` 에서 픽셀 하나를 선택합니다.
+
+- `THREE.NearestMipmapLinearFilter`  
+  두 개의 `mip` 을 골라 픽셀을 하나씩 선택한 후, 두 개의 픽셀을 적절한 비율로 섞습니다.
+
+- `THREE.LinearMipmapNearestFilter`  
+  적절한 밉을 고른 뒤 네 개의 픽셀을 골라 섞습니다.
+
+- `THREE.LinearMipmapLinearFilter`  
+  두 개의 `mip` 을 골라 각각 픽셀을 4개씩 선택하고, 선택한 8개의 픽셀을 섞습니다.  
+  `three.js` 의 기본값으로 설정되어 있습니다.
+
+![mini-filter-compare](/assets/img/three-js-texture/mini-filter-compare.gif)
+
+위 이미지는 아래와 같이, `mip` 의 각 단계가 다른 `texture` 에 여섯개의 `minification filter` 를 적용한 예시입니다.
+
+![different-mip-maps](/assets/img/three-js-texture/different-mip-maps.png)
+
+위의 예시에서 `NearestFilter` 와 `LinearFilter` 를 살펴보면, 항상 원본 `texture` 를 렌더링하는 것으로 보아 `mipmap` 을 사용하지 않음을 알 수 있습니다.
+GPU가 원본 `texture` 를 사용하기 때문에 멀리 떨어질수록 깜빡거림을 관찰할 수 있습니다.  
+나머지 4개의 `filter` 는 모두 `mipmap` 을 사용하기 때문에 시점에 따라 렌더링 되는 `texture` 가 달라집니다.
+`LinearMipmapLinearFilter` 가 가장 자연스러우나, 2개의 `mip` 에서 각각 4개의 픽셀을 가져오기때문에 계산량이 많아진다는 단점이 있습니다.
+
+`NearestFilter` 와 `LinearFilter` 는 `mipmap` 을 사용하지 않기 때문에 아래와 같이 `mipmap` 생성을 비활성화 시키면 GPU의 부하를 조금 줄일 수 있습니다.
+
+```javascript
+// ...생략...
+texture.generateMipmaps = false;
+// ...생략...
+```
 
 #### 📔 참고자료
 
