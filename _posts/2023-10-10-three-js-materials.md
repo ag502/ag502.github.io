@@ -134,6 +134,36 @@ material.alphaMap = opacityTexture;
 `THREE.FrontSide`, `THREE.BaskSide`, `THREE.DoubleSide` 세개의 값을 설정할 수 있으며, 각각 `mesh` 의 앞면, 뒷면, 양면에 `material` 이 적용됩니다. 기본값은 `THREE.FrontSide` 입니다.  
 주의할 점은 `THREE.DoubleSide` 일 경우 면에 그려지는 삼각형이 두배가 된다는 것입니다.
 
+### 👨‍💻 MeshNormalMaterial
+
+`MeshNormalMaterial` 는 `geometry` 의 법선(`normal`)을 보여줍니다.  
+여기서 법선이란, 특정 삼각형이나 픽셀들이 향하는 방향을 의미하며 `x` 축은 빨강, `y` 축은 초록, `z` 축은 파랑색으로 표현합니다. 이 때 법선의 방향은 `camera` 에 상대적입니다. 즉 법선 벡터의 방향이 `camera` 시각에서 어디를 향하고 있는지에 따라 달라진다는 의미입니다.
+`MeshNormalMaterial` 은 보통 법선 벡터를 디버깅하기 위해 많이 사용합니다.
+
+```javascript
+// ...생략...
+const material = new THREE.MeshNormalMaterial();
+// ...생략...
+```
+
+![normal-material-1](/assets/img/three-js-materials/normal-material-1.png)
+
+각 정점들의 법선 벡터들이 가리키는 방향에 따라 색상이 표현되며, 이 색상들이 섞여 위와 같은 결과가 나옵니다.
+
+#### 🖊 `flatShading`
+
+`true` 로 설정할 경우 `flat shading` 으로 면을 렌러링하게 됩니다.
+
+```javascript
+// ...생략...
+material.flatShading = true;
+// ...생략...
+```
+
+`true` 로 설정할 경우, 하나의 면이나 삼각형의 정점들은 모두 같은 법선 벡터를 가지게 되고 이는 면을 평평하게 만드는 결과를 낳게됩니다.
+
+![normal-material-2](/assets/img/three-js-materials/normal-material-2.png)
+
 #### 📔 참고자료
 
 [metal key hole 001](https://3dtextures.me/2021/12/29/metal-key-hole-001/)
