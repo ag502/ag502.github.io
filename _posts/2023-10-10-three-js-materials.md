@@ -164,6 +164,114 @@ material.flatShading = true;
 
 ![normal-material-2](/assets/img/three-js-materials/normal-material-2.png)
 
+### 👨‍💻 MeshMatcapMaterial
+
+`MeshMatcapMaterial` 은 `MatCap(Material Capture ⇔ LitSphere) texture` 에 의해 정의되는 `material` 입니다. 여기서 `MatCap texture` 란, 광원, 반사와 같은 정보를 포함하고 있는 `texture` 를 말합니다.
+
+`MatCap texture` 를 `mesh` 에 적용하게 되면, `camera` 에 상대적인 법선 벡터의 방향에 따라 `texture` 로 부터 색을 가져오게 됩니다.
+또한 `texture` 에 광원과 반사에 대한 정보가 있기때문에, 광원을 따로 추가해주지 않아도 광원에 비친것 같은 효과를 줍니다. 이는 실제 광원을 추가한 것 보다 성능상의 이점이 있습니다.  
+하지만, 실제로 광원을 추가한 것은 아니기 때문에, `camera` 의 방향과 무관하게 항상 광원에 의한 효과가 항상 같다는 단점이 있습니다.
+
+아래는 `MatCap texture` 와 이를 적용한 `mesh` 의 이미지입니다.
+
+![matcap-texture-box](/assets/img/three-js-materials/matcap-texture-box.png)  
+광원을 추가하지 않았는데, 광원을 비춘 효과가 적용된 것을 볼 수 있습니다.
+
+#### 🖊 `map`
+
+`MatCap texture` 를 지정하는 속성입니다.
+
+```javascript
+// ...생략...
+const material = new THREE.MeshMatcapMaterial();
+material.matcap = matcapTexture;
+// ...생략...
+```
+
+### 👨‍💻 MeshDepthMaterial
+
+`MeshDepthMaterial` 은 각 픽셀의 깊이(depth)를 렌더링합니다.  
+`camera` 에 가까울수록, 흰색으로 렌더링되며 멀어질수록 검은색으로 렌더링됩니다.
+
+```javascript
+// ...생략...
+const material = new THREE.MeshDepthMaterial();
+// ...생략...
+```
+
+아래는 `MeshDepthMaterial` 을 적용한 결과입니다.
+
+![depth-material-box-1](/assets/img/three-js-materials/depth-material-box-1.png)
+
+### 👨‍💻 MeshLambertMaterial
+
+`MeshLambertMaterial` 은 광원에 반응하는 `material` 로 광택이나 반사점(specular highlights - 물체가 조명을 받을 때, 나타나는 밝은 점)이 없는 물체를 표현할 때 사용됩니다.  
+`MeshLambertMaterial` 은 반사율을 계산하기 위해 비물리적 기반의 램버시안 모델(non-physically based Lambertian model)을 사용하는데,
+이는 가공되지 않은 나무나 돌과 같은 표면은 표현할 수 있지만, 광택이 나는 표면은 표현하지 못합니다. 또한 해당 `material` 은 정점에서만 광원을 계산합니다.
+
+이런 특징들 때문에 `MeshLambertMaterial` 은 광원에 반응하는 다른 `material` 들 보다 성능면에서 뛰어납니다.
+
+```javascript
+// ...생략...
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+scene.add(ambientLight);
+
+const pointLight = new THREE.PointLight(0xffffff, 0.5);
+pointLight.position.set(2, 3, 4);
+scene.add(pointLight);
+
+const material = new MeshLamberMaterial();
+// ...생략...
+```
+
+위 코드는 `MeshLambertMaterial` 을 생성하는 코드입니다.  
+`MeshLambertMaterial` 이 광원에 반응하는 `material` 이기 때문에, 위와 같이 광원을 추가해 주어야 사용할 수 있습니다.
+
+아래는 위 코드를 실행시킨 결과로, 조명에 의해 생긴 반사점이나 광택을 관찰할 수 없습니다.
+
+![lambert-material-1](/assets/img/three-js-materials/lambert-material-1.png)
+
+### 👨‍💻 MeshPhongMaterial
+
+광원에 반응하는 `material` 로, 광택이나 반사점을 표현해야 할 때 사용합니다.  
+`MeshPhongMaterial` 은 반사율을 계산하기 위해 비물리적 기반의 `Blinn-Phong` 모델을 사용합니다. 이 모델은 램버시안 모델과 달리, 광택이 나는 표면을 표현할 수 있습니다.
+또한 모든 픽셀에서 광원을 계산합니다.
+
+#### 🖊 `shininess`
+
+반사점(Specular highlights)이 얼마나 빛날지를 결정하는 속성입니다.  
+높을수록 더욱 빛나게되며, 기본값은 30 입니다.
+
+```javascript
+// ...생략...
+const material = new THREE.MeshPhongMaterial();
+material.shininess = 100;
+// ...생략...
+```
+
+![lambert-material-sphere-1](/assets/img/three-js-materials/lambert-material-sphere-1.png)
+
+위 이미지는 각각 `shininess` 속성을 20, 100으로 설정한 결과 입니다. 100으로 설정한 경우가 반사점이 더 빛나는 것을 볼 수 있습니다.
+
+#### 🖊 `specular`
+
+반사점의 색을 지정하는 설정입니다. 기본값은 `0x111111` 입니다.
+
+```javascript
+// ...생략...
+const material = new THREE.MeshPhongMaterial();
+material.shininess = 100;
+material.specular = new THREE.Color("green");
+// ...생략...
+```
+
+위 코드를 실행시킨 결과는 아래와 같습니다.
+
+![lambert-material-sphere-2](/assets/img/three-js-materials/lambert-material-sphere-2.png)
+
+### 👨‍💻 MeshToonMaterial
+
 #### 📔 참고자료
 
 [metal key hole 001](https://3dtextures.me/2021/12/29/metal-key-hole-001/)
+[matcaps](https://github.com/nidorx/matcaps)
