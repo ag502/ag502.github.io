@@ -271,7 +271,159 @@ material.specular = new THREE.Color("green");
 
 ### 👨‍💻 MeshToonMaterial
 
+`MeshToonMaterial` 은 그라디언트 맵을 사용하는 `material` 입니다.  
+투톤의 그라디언트가 기본으로 지정되어 있어 카툰의 느낌을 줍니다. 그라디언트는 직접 설정해 줄 수도 있습니다.
+
+```javascript
+// ...생략...
+const material = new THREE.MeshToonMaterial();
+// ...생략...
+```
+
+![toon-material-sphere-1](/assets/img/three-js-materials/toon-material-sphere-1.png)
+
+위 이미지는 기본 그라디언트가 적용된 `MeshToonMaterial` 입니다.
+
+#### 🖊 `gradientMap`
+
+`MeshToonMaterial` 의 그라디언트를 지정해 줄 수 있는 속성입니다.  
+`gradientMap` 을 지정해줄 때 주의할 점은, `magFilter` 와 `minFilter` 를 `THREE.NearestFilter` 로 지정해 주어야 한다는 것입니다.
+
+```javascript
+// ...생략...
+gradientTexture.magFilter = THREE.NearestFilter;
+gradientTexture.minFilter = THREE.NearestFilter;
+gradientTexture.generateMipmaps = false;
+
+const material = new MeshToonMaterial();
+material.gradientMap = gradientTexture;
+// ...생략...
+```
+
+### 👨‍💻 MeshStandardMaterial
+
+`PBR` (Physically Based Rendering) 을 기반으로 한 `material` 로, 앞서 살펴본 `material` 들과 달리 조명과 상호작용하는 방식을 훨씬 더 정확하게 표현합니다 (현실 세계와 거의 비슷하게 표현).
+
+#### 🖊 `roughness`
+
+`Material` 의 거칠기(roughness)를 표현하는 속성입니다.  
+`0.0` 일 경우 표면이 매끄러워져 거울처럼 반사가 일어나며, `1.0` 일 경우 표면이 상대적으로 거칠어져 반사가 발생하지 않습니다 (fully diffuse). 기본값은 `1.0` 입니다.
+
+```javascript
+// ...생략...
+const material = new THREE.MeshStandardMaterial();
+material.map = colorTexture;
+material.roughness = 0;
+// ...생략...
+```
+
+![standard-material-roughness-1](/assets/img/three-js-materials/standard-material-roughness-1.png)
+
+위 결과에서 `roughness` 가 0 인것이 1 보다 표면이 매끄러운것을 알 수 있으며, 반사점도 생겼음을 볼 수 있습니다.
+
+#### 🖊 `metalness`
+
+`Material` 의 금속성(metalness)을 표현하는 속성입니다.  
+금속성을 띄지 않는 `material` 은 `0.0` 이며, 금속성을 띄는 `material` 은 `1.0` 값을 가집니다. 기본값은 `0.0` 입니다.
+
+![standard-material-metalness-1](/assets/img/three-js-materials/standard-material-metalness-1.png)
+
+#### 🖊 `roughnessMap`
+
+`Rough texture` 를 설정할 수 있는 속성입니다.  
+만약 해당 속성에 값이 설정되었다면, `roughness` 속성은 기본값으로 설정해야 합니다. 그렇지 않으면 값이 배가 됩니다.
+
+```javascript
+// ...생략...
+const material = new THREE.MeshStandardMaterial();
+material.roughnessMap = roughnessTexture;
+// ...생략...
+```
+
+#### 🖊 `metalnessMap`
+
+`Metalness texture` 를 설정할 수 있는 속성입니다.  
+`roughnessMap` 과 마찬가지로, 해당 속성이 설정되었다면 `metalness` 속성을 기본값으로 설정해야합니다.
+
+```javascript
+// ...생략...
+const material = new THREE.MeshStandardMaterial();
+material.metalnessMap = metalnessTexture;
+// ...생략...
+```
+
+#### 🖊 `aoMap`
+
+`Ambient Occlusion texture` 를 적용할 수 있는 속성으로, `texture` 에서 어두운 부분에 그림자를 추가합니다.
+
+```javascript
+// ...생략...
+const material = new THREE.MeshStandardMaterial();
+material.aoMap = ambientOcclusionTexture;
+// ...생략...
+```
+
+![standard-material-aomap-1](/assets/img/three-js-materials/standard-material-aomap-1.png)
+
+위 그림은 `Ambient Occlusion texture` 를 적용하기 전과 후의 이미지 입니다.  
+적용하기 전과 비교했을 때, `texture` 의 어두운 부분에 해당하는 부분이 `mesh` 에서 더 어두워 졌음을 볼 수 있습니다.
+
+#### 🖊 `aoMapIntensity`
+
+`aoMap` 에서 음영효과를 얼마나 줄것인지 설정할 수 있는 속성입니다.  
+기본값은 `1` 이며, `0` 으로 설정할 시 효과적용이 되지 않습니다.
+
+#### 🖊 `displacementMap`
+
+`Displacement Texture` 를 설정하는 속성입니다.
+
+```javascript
+// ...생략...
+const material = new THREE.MeshStandardMaterial();
+material.displacementMap = displacementTexture;
+// ...생략...
+```
+
+![standard-material-displacement-1](/assets/img/three-js-materials/standard-material-displacement-1.png)
+
+위 이미지는 왼쪽의 `Displacement texture` 를 오른쪽의 `SphereGeometry` 에 적용한 결과입니다.  
+`Displacement texture` 와 실제 적용된 결과가 다른 것을 볼 수 있는데, 이는 `displacement texture` 의 특징때문에 그렇습니다.
+[`texture`](https://ag502.github.io/posts/three-js-textures/#-height-displacement) 에서 살펴보았듯이, 해당 `texture` 는 `geometry` 의 면들을 나누에 해당 정점들을 높이에 따라 변경합니다. 따라서 `segment` 가 높을 수로 정교해집니다.
+
+아래는 `new THREE.SphereGeometry(1, 1000, 1000)` 로 `segment` 를 증가시킨 후 적용시킨 결과입니다.
+
+![standard-material-displacement-2](/assets/img/three-js-materials/standard-material-displacement-2.png)
+
+#### 🖊 `displacementScale`
+
+`displacementMap` 이 `mesh` 에 영향을 끼치는 정도를 지정하는 옵션입니다.  
+기본값은 `1` 이며, `0` 으로 설정시 효과가 적용되지 않습니다.
+
+![standard-material-displacement-3](/assets/img/three-js-materials/standard-material-displacement-3.png)
+
+#### 🖊 `normalMap`
+
+`Normal Texture` 를 적용하는 속성입니다.
+
+#### 🖊 `alphaMap`
+
+`Opacity texture` 를 설정할 수 있는 옵션입니다.
+
+### 👨‍💻 MeshPhysicalMaterial
+
+`MeshPhysicalMaterial` 은 `MeshStandardMaterial` 과 기본적으로 같지만, `clearcoat` 옵션으로 표면의 코팅 세기를 설정하고 `clearcoatRoughness` 로 코팅의 거칠기를 설정한다는 점이 다릅니다.
+
+### 👨‍💻 PointsMaterial
+
+`Points` 가 기본으로 상요하는 `material` 입니다.
+
+### 👨‍💻 ShaderMaterial, RawShaderMaterial
+
+`Material` 을 커스텀할 때 사용합니다.  
+`ShaderMaterial` 의 경우 `three.js` 의 `shader` 시스템을 사용하지만, `RawShaderMaterial` 의 경우 그렇지 않다는 차이점이 있습니다.
+
 #### 📔 참고자료
 
-[metal key hole 001](https://3dtextures.me/2021/12/29/metal-key-hole-001/)
-[matcaps](https://github.com/nidorx/matcaps)
+[metal key hole 001](https://3dtextures.me/2021/12/29/metal-key-hole-001/)  
+[matcaps](https://github.com/nidorx/matcaps)  
+[Materials](https://threejs.org/manual/#en/materials)
