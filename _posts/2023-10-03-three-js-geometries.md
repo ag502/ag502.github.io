@@ -190,6 +190,64 @@ fontLoader.load("font-path", (font) => {
   > `beveled edge` 란 아래와 같이 물체의 가장자리나 모서리를 평면으로 다듬은 것을 의미합니다.  
   > ![beveled-edge](/assets/img/three-js-geometries/beveled-edge.png)
 
+  ![text-geometry-bevel-enabled-1](/assets/img/three-js-geometries/text-geometry-bevel-enabled-1.png)
+
+  `bevelEnabled` 를 `true` 로 설정할 시 텍스트의 모서리 부분이 둥글게 처리됨을 볼 수 있습니다.
+
+- `bevelThickness`  
+  `bevel` 의 두께를 설정하는 옵션입니다. 기본값은 `10` 입니다.  
+  ![text-geometry-bevel-thickness-1](/assets/img/three-js-geometries/text-geometry-bevel-thickness-1.png)
+
+- `bevelSize`  
+  텍스트의 윤곽(outline)으로 부터 `bevel` 이 얼마나 떨어져 있는지를 설정하는 옵션입니다. 기본값은 `8` 입니다.
+
+- `bevelOffset`  
+  텍스트의 윤곽이 시작하는 위치를 설정하는 옵션입니다. 기본값은 `0` 입니다.  
+  ![text-geometry-bevel-offset-1](/assets/img/three-js-geometries/text-geometry-bevel-offset-1.png)  
+  `bevelOffset` 을 `0.01` 설정했을 때, 텍스트의 윤곽선이 원점에서 떨어짐을 볼 수 있습니다.
+
+- `bevelSegments`  
+  `bevel edge` 의 `segment` 수를 설정하는 옵션입니다. 기본값은 `3` 이며, 높을 수록 부드러운 `bevel edge` 를 얻을 수 있습니다.
+
+#### 🖊 가운데 정렬하기
+
+`BufferGeometry` 를 상속받는 객체들은 `center` 메소드를 사용해서 가운데로 위치를 옮길 수 있습니다.  
+`center` 메소드는 `bounding box` 를 기반으로 `geometry` 를 가운데로 이동시키는데, 이동시키는 과정을 직접 구현해보겠습니다.
+
+> ##### `bounding` 이란?
+>
+> `bounding` 은 `Geometry` 를 둘러싸고 있는 경계를 의미하며, 크기 측정, 충돌감지 등 다양한 용도로 사용할 수 있습니다.
+> 둘러 싸고 있는 경계의 모양의 따라, `bounding box`, `bounding sphere` 등으로 구분할 수 있습니다.
+
+1. `computeBoundingBox` 로 `bounding box` 구하기  
+   `Bounding box` 는 기본으로 계산되지 않기 때문에 해당 함수를 사용해서 계산해주어야 합니다. 이는 `bounding sphere` 도 마찬가지 입니다. (`computeBoundingSphere`)
+
+2. `boundingBox` 속성 이용하기
+
+```javascript
+textGeometry.computeBoundBox();
+console.log(textGeometry.boundingBox);
+```
+
+위 코드를 실행시키면 아래와 같이 출력됩니다.
+
+![bound-box-1](/assets/img/three-js-geometries/bound-box-1.png)
+
+`max` 와 `min` 두 가지 속성을 확인할 수 있는데, 해당 좌표는 `bounding box` 의 최대, 최소 좌표를 의미합니다.  
+또한 `min` 속성의 `Vector3` 가 `0` 이 아님을 알 수 있는데, 이는 `bevelSize` 와 `bevelThickness` 값 때문입니다.
+
+위의 내용들을 바탕으로 작성한 코드는 다음과 같습니다.
+
+```javascript
+// ...생략...
+textGeometry.translate(
+  -(textGeometry.boundingBox.max.x - bevelSize) * 0.5,
+  -(textGeometry.boundingBox.max.y - bevelSize) * 0.5,
+  -(textGeometry.boundingBox.max.z - bevelThickness) * 0.5
+);
+// ...생략...
+```
+
 ## 💻 사용자 지정 BufferGeometry
 
 `BufferGeometry`는 `three.js` 내의 모든 `geometry`를 나타냅니다 (원시 모델의 부모 클래스). 또한 `BufferAttribute` 속성들의 집합이라고 할 수 있습니다.
@@ -413,4 +471,5 @@ geometry.setIndex([
 
 [Primitives](https://threejs.org/manual/#en/primitives)  
 [Custom BufferGeometry](https://threejs.org/manual/#en/custom-buffergeometry)  
-[Three.js: Geometries and materials](https://blog.logrocket.com/three-js-geometries-and-materials/)
+[Three.js: Geometries and materials](https://blog.logrocket.com/three-js-geometries-and-materials/)  
+[Bevel](https://en.wikipedia.org/wiki/Bevel)
