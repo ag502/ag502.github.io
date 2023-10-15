@@ -76,9 +76,123 @@ const mesh = new THREE.Mesh(boxGeometry, material);
 
 `segment` 가 증가하면, 곡선 표현에 유리해집니다. 평면은 `segment` 의 갯수와 무과하지만, 구의 경우 `segment` 의 갯수가 증가할 수록 완벽한 구에 가까워 집니다.
 
+### 👨‍💻 TextGeometry
+
+`TextGeometry` 는 텍스트를 하나의 `geometry` 로 표현하기 위해 사용합니다.  
+`TextGeometry` 의 부모 클래스는 `BufferGeometry` 를 상속받는 `ExtrudeGeometry` 이며, 생성자에 표현할 텍스트와 옵션을 넘겨줍니다.
+
+#### 🖊 사용가능한 폰트
+
+`TextGeometry` 는 `typeface.json` 을 사용합니다.  
+`typeface.json` 을 사용하기 위해서는 [Facetype.js](http://gero3.github.io/facetype.js/) 와 같은 변환 사이트를 이용해 일반 글꼴을 `typeface.json` 으로 변환 시키거나 `three.js` 에서 제공하는 built-in `typeface.json` 를 이용하는 방법이 있습니다.
+
+`three.js` 의 built-in `typeface.json` 들은 `/examples/fonts/` 하위에 위치하고 있습니다.
+
+#### 🖊 폰트 불러오기
+
+사용할 `typeface.json` 을 불러오기 위해서는 `FontLoader` 를 사용해야합니다.
+
+```javascript
+import { FontLoader } from "three/addons/loaders/FontLoader";
+
+const fontLoader = new FontLoader();
+fontLoader.load(
+  "font-path",
+  (font) => {
+    console.log("font is loaded");
+  },
+  (xmlHttpRequest) => {
+    console.log("font is loading");
+  },
+  () => {
+    console.log("font cannot be loaded");
+  }
+);
+```
+
+위 예시는 `FontLoader` 를 이용하여 `typeface.json` 을 불러오는 코드입니다.  
+위 코드를 통해 `FontLoader` 가 `three/addons` 경로(`three/examples/jsm`)에 위치하고 있음을 알 수 있습니다.
+또한 `load` 메소드는 `typeface.json` 의 경로외에도, `onLoad`, `onProgress`, `onError` 를 콜백함수로 받고 있습니다.
+
+추가로 [texture](https://ag502.github.io/posts/three-js-textures/#-loadingmanager) 에서 살펴보겠지만, `FontLoader` 도 `Loader` 클래스를 상속받는 자식 클래스이기 때문에 `LoadingManager` 를 사용할 수 있습니다.
+
+#### 🖊 TextGeometry 생성하기
+
+아래는 `TextGeometry` 의 생성자의 인자들과, 해당 클래스를 바탕으로 `TextGeometry` 를 생성하는 코드입니다.
+
+> <pre style="color:cyan;">
+> TextGeometry(text: String, { 
+>   font: THREE.Font, 
+>   size: Float, 
+>   height: Float, 
+>   curveSegments: Integer, 
+>   bevelEnabled: Boolean, 
+>   bevelThickness: Float,
+>   bevelSize: Float, 
+>   bevelOffset: Float, 
+>   bevelSegments: Integer
+> })
+> 
+> </pre>
+
+```javascript
+import { TextGeometry } from "three/addons/geometry/TextGeometry";
+
+// ...생략...
+fontLoader.load("font-path", (font) => {
+  const textGeometry = new THREE.Text("Hello", {
+    font,
+    size: 0.5,
+    height: 0.2,
+    curveSegments: 12,
+    bevelEnabled: true,
+    bevelThickness: 0.03,
+    bevelSize: 0.02,
+    bevelOffset: 0,
+    bevelSegments: 5,
+  });
+
+  const material = new THREE.MeshBasicMaterial();
+  const mesh = new THREE.Mesh(textGeometry, material);
+
+  scene.add(mesh);
+});
+// ...생략...
+```
+
+위 코드를 실행시킨 결과는 아래와 같습니다. (코드에는 생략되었지만 `AxesHelper` 를 추가했습니다.)
+
+![text-geometry-1](/assets/img/three-js-geometries/text-geometry-1.png)
+
+이제 `TextGeometry` 의 생성자 인자중, 두번째 객체 인자의 속성들의 의미를 살펴보겠습니다.
+
+- `font`  
+  `TextGeometry` 에서 사용할 `font` 를 설정하는 옵션입니다.
+
+- `size`  
+  `font` 의 크기를 의미합니다. 기본값은 `100` 입니다.
+
+- `height`  
+  `TextGeometry` 의 두께를 의미합니다. 기본값은 `50` 입니다.
+  ![text-geometry-height-1](/assets/img/three-js-geometries/text-geometry-height-1.png)
+
+  위 이미지는 `material` 의 `wireframe` 옵션을 `true` 설정한 다음 `height` 의 크기를 변경한 결과입니다.
+
+- `curveSegments`  
+  하나의 곡선을 구성하는 점의 수를 설정하는 옵션입니다. 기본값은 `12` 입니다.  
+  값이 클 수록 곡선상의 `segment` 수가 많아지고, 부드러워 집니다.  
+  ![text-geometry-curve-segment-1](/assets/img/three-js-geometries/text-geometry-curve-segment-1.png)
+
+- `bevelEnabled`  
+  `beveled edge` 사용 여부를 설정하는 옵션입니다. 기본값은 `false` 입니다.
+
+  > 🖊 `beveled edge` 란?
+  > `beveled edge` 란 아래와 같이 물체의 가장자리나 모서리를 평면으로 다듬은 것을 의미합니다.  
+  > ![beveled-edge](/assets/img/three-js-geometries/beveled-edge.png)
+
 ## 💻 사용자 지정 BufferGeometry
 
-`BufferGeometry`는 `three.js` 내의 모든 `geometry`를 나타냅니다 (원시 모델의 부모 클래스). 또한 `BufferAttribute` 속성들의 집합이라고 할 수 있습니다.  
+`BufferGeometry`는 `three.js` 내의 모든 `geometry`를 나타냅니다 (원시 모델의 부모 클래스). 또한 `BufferAttribute` 속성들의 집합이라고 할 수 있습니다.
 `BufferGeometry` 로 직접 `geometry` 를 만들기 위해서는 정점들을 추가해주어야 합니다. 정점들을 추가해주기 위해서는 배열을 사용해야하는데, 이때 [`Float32Array`](https://developer.mozilla.org/ko/docs/Web/JavaScript/Reference/Global_Objects/Float32Array) 를 사용합니다.
 
 `BufferGeometry` 를 이용해서 육면체를 만들어보겠습니다.
@@ -244,22 +358,52 @@ const vertices = [
 ];
 
 geometry.setAttribute(
-    'position',
-    new THREE.BufferAttribute(positions, positionNumComponents));
+  "position",
+  new THREE.BufferAttribute(positions, positionNumComponents)
+);
 geometry.setAttribute(
-    'normal',
-    new THREE.BufferAttribute(normals, normalNumComponents));
-geometry.setAttribute(
-    'uv',
-    new THREE.BufferAttribute(uvs, uvNumComponents));
- 
+  "normal",
+  new THREE.BufferAttribute(normals, normalNumComponents)
+);
+geometry.setAttribute("uv", new THREE.BufferAttribute(uvs, uvNumComponents));
+
 geometry.setIndex([
-   0,  1,  2,   2,  1,  3,  // 앞쪽
-   4,  5,  6,   6,  5,  7,  // 오른쪽
-   8,  9, 10,  10,  9, 11,  // 뒤쪽
-  12, 13, 14,  14, 13, 15,  // 왼쪽
-  16, 17, 18,  18, 17, 19,  // 상단
-  20, 21, 22,  22, 21, 23,  // 하단
+  0,
+  1,
+  2,
+  2,
+  1,
+  3, // 앞쪽
+  4,
+  5,
+  6,
+  6,
+  5,
+  7, // 오른쪽
+  8,
+  9,
+  10,
+  10,
+  9,
+  11, // 뒤쪽
+  12,
+  13,
+  14,
+  14,
+  13,
+  15, // 왼쪽
+  16,
+  17,
+  18,
+  18,
+  17,
+  19, // 상단
+  20,
+  21,
+  22,
+  22,
+  21,
+  23, // 하단
 ]);
 
 // ...생략...
