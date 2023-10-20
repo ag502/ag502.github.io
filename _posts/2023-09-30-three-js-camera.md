@@ -284,6 +284,17 @@ animate();
 
 위 코드는 좌우로 마우스를 움직임에 따라 카메라가 수평으로 회전하게끔하는 코드입니다.
 
+## 💻 CameraHelper
+
+`Scene` 의 좌표축을 시각화해주는 `AxesHelper` 처럼, `camera` 의 절두체를 시각화 할 수 있습니다.
+
+```javascript
+// ...생략...
+const cameraHelper = new CameraHelper(camera);
+scene.add(cameraHelper);
+// ...생략...
+```
+
 #### 📔 참고 자료
 
 [Exploring Cameras in Three.js](https://medium.com/@gopisaikrishna.vuta/exploring-cameras-in-three-js-32e268a6bebd)  

@@ -162,12 +162,117 @@ scene.add(spotLight.target);
 
   ![spot-light-3](/assets/img/three-js-light/spot-light-3.png)
 
-## 💻 ReactAreaLight
+## 💻 RectAreaLight
 
-> <span style="color: cyan;">ReactAreaLight( color : Integer, intensity : Float, width: Float, height: Float )</span>
+> <span style="color: cyan;">RectAreaLight( color : Integer, intensity : Float, width: Float, height: Float )</span>
 
-`ReactAreaLight` 는 직사각형 평면에 고르게 빛을 방출하는 `light` 입니다.  
+`ReactAreaLight` 는 직사각형 평면을 따라 고르게 빛을 방출하는 `light` 입니다.  
 주로 빛이 들어오는 유리창이나, 스트립 조명(strip light)를 표현할 때 사용하며, `MeshStandardMaterial` 이나 `MeshPhysicalMaterial` 만 지원하는 특징이 있습니다.
+
+```javascript
+// ...생략...
+const RectAreaLight = new THREE.RectAreaLight(0xffffff, 1, 12, 4);
+RectAreaLight.position.set(0, 10, 0);
+RectAreaLight.rotation.x(-(Math.PI * 0.5));
+scene.add(RectAreaLight);
+// ...생략...
+```
+
+위 예시는 `RectAreaLight` 를 생성하여, 시계방향으로 `π/2` 만큼 회전시키고, `y` 축을 따라 `10` 만큼 이동시키는 코드로 결과는 아래와 같습니다.
+
+![Rect-area-light-1](/assets/img/three-js-light/react-area-light-1.png)
+
+`RectAreaLight` 는 `DirectionalLight`, `SpotLight` 와 달리 `target` 을 사용하지 않고, `rotation` 속성을 이용하여 회전시킬 수 있습니다.
+
+## 💻 LightHelper
+
+`LightHelper` 를 사용하면, `Light` 의 위치나, 방향과 같은 특징들을 시각화 할 수 있습니다.
+
+❗️ GUI 툴을 통해 값을 변경할때, 변경된 값을 `Helper` 객체에 반영하기 위해서 `update` 함수를 값이 변경될때마다 실행되도록 설정해주어야 합니다.
+또한 `target` 이 존재하는 `Light` 들 (`DirectionalLight`, `SpotLight`)은 `Object3D` 객체의 `updateMatrixWorld` 함수를 같이 실행시켜주어야 합니다.
+
+### 👨‍💻 HemisphereLightHelper
+
+마름모 모양의 `mesh` 를 사용하여 조명을 시각화 합니다.
+
+```javascript
+// ...생략...
+const hemiSphereLightHelper = new THREE.HemiSphereLightHelper(hemisphereLight);
+scene.add(hemiSphereLightHelper);
+// ...생략...
+```
+
+![hemisphere-light-helper-1](/assets/img/three-js-light/hemisphere-light-helper-1.png)
+
+### 👨‍💻 DirectionalLightHelper
+
+`DirectionalLightHelper` 는 조명을 사각형으로, 빛의 방향을 선으로 표현합니다.
+
+```javascript
+// ...생략...
+const directionalLightHelper = new THREE.DirectionalLightHelper(
+  directionalLight
+);
+scene.add(directionalLightHelper);
+// ...생략...
+```
+
+![directional-light-helper-1](/assets/img/three-js-light/directional-light-helper-1.png)
+
+### 👨‍💻 PointLightHelper
+
+`PointLightHelper` 는 빛이 시작되는 점을 다이아몬드 모양의 와이어프레임으로 표현합니다.
+
+```javascript
+// ...생략...
+const pointLightHelper = new THREE.PointLightHelper(pointLight);
+scene.add(pointLightHelper);
+// ...생략...
+```
+
+![point-light-helper-1](/assets/img/three-js-light/point-light-helper-1.png)
+
+### 👨‍💻 SpotLightHelper
+
+원뿔모양의 와이어프레임을 추가해 시각화 합니다.
+
+```javascript
+// ...생략...
+const spotLightHelper = new THREE.SpotLightHelper(spotLight);
+scene.add(spotLightHelper);
+// ...생략...
+```
+
+![spot-light-helper-1](/assets/img/three-js-light/spot-light-helper-1.png)
+
+### 👨‍💻 RectAreaLightHelper
+
+`RectAreaLight` 와 같은 크기의 사각형을 이용해 시각화합니다.
+
+```javascript
+// ...생략...
+import { RectAreaLightHelper } from "three/addons/helpers/RectAreaLightHelper";
+
+const rectAreaLightHelper = new THREE.RectAreaLightHelper(rectAreaLight);
+scene.add(rectAreaLightHelper);
+// ...생략...
+```
+
+한가지 유의할 점은 `RectAreaLightHelper` 는 `addons` 에서 임포트한다는 점입니다.
+
+![rect-area-light-helper-1](/assets/img/three-js-light/rect-area-light-helper-1.png)
+
+## 💻 성능
+
+`Light` 는 비용이 많이 드는 연산으로, 주의해서 사용해야하는 객체 중 하나입니다.  
+각 조명별 비용을 비교하면 아래와 같습니다.
+
+> `AmbientLight`, `HemisphereLight` < `DirectionalLight`, `PointLight` < `SpotLight`, `RectAreaLight`
+
+## 💻 Texture에 조명 넣기
+
+`Texture` 자체에 조명을 추가해 `Light` 를 추가한 것과 같은 효과를 주는 방법입니다.  
+계산에 들어가는 비용을 줄일 수 있다는 장점이 있지만, `texture` 의 용량이 커져 로딩시간이 늘어난다는 것과 `light` 를 움직일 수 없다는 단점이 존재합니다.
 
 #### 📗 참고자료
 
