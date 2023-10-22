@@ -140,3 +140,51 @@ sphereMesh.receiveShadow = true;
   ![directional-light-shadow-5](/assets/img/three-js-shadow/directional-light-shadow-5.png)
 
 ### 👨‍💻 SpotLight
+
+```javascript
+// ...생략...
+const spotLight = new THREE.SpotLight(0xffffff, 1);
+spotLight.castShadow = true;
+// ...생략...
+```
+
+위 코드를 이용하여 `SpotLight` 에 그림자를 생성한 결과는 다음과 같습니다.
+
+![spot-light-shadow-1](/assets/img/three-js-shadow/spot-light-shadow-1.png)
+
+#### 🖊 그림자 최적화하기
+
+그림자를 최적화하는 방법은 `DirectionalLight` 와 거의 비슷합니다.  
+이 부분에서는 다른점을 위주로 서술하겠습니다.
+
+- `camera`  
+  `SpotLight` 는 그림자를 만들기 위해 `PerspectiveCamera` 를 사용합니다. `CameraHelper` 를 통해 시각화한 결과는 아래와 같습니다.
+
+  ![spot-light-shadow-2](/assets/img/three-js-shadow/spot-light-shadow-2.png)
+
+  `SpotLight` 의 `camera` 의 `fov` 는 `angle` 과 연결되어 있으며, `aspect` 는 `Shadow Map` 의 크기에 따라 자동으로 정해지게 됩니다.
+  따라서 `near` 와 `far` 를 조절할 수 있습니다.
+
+### 👨‍💻 PointLight
+
+```javascript
+// ...생략...
+const pointLight = new THREE.PointLight(0xffffff, 1);
+pointLight.castShadow = true;
+// ...생략...
+```
+
+위 코드를 실행한 결과는 아래와 같습니다.
+
+![point-light-shadow-1](/assets/img/three-js-shadow/point-light-shadow-1.png)
+
+#### 🖊 그림자 최적화하기
+
+- `camera`  
+  `PointLight` 는 그림자를 만들기 위해 `PerspectiveCamera` 를 사용합니다.  
+  `PointLight` `camera` 의 `near` 와 `far` 속성을 조정해 렌더링 범위를 설정할 수 있습니다.
+
+  ![point-light-shadow-3](/assets/img/three-js-shadow/point-light-shadow-3.png)
+
+  `SpotLight` 와 같은 `camera` 를 사용하지만, 차이점은 `PointLight` 는 모든 방향으로 빛을 발산하기 때문에 정육면체의 각면에 조명을 놓은것과 같습니다.
+  즉 `PointLight` 는 정육면체 각 방향으로 6번을 렌더링해야 함으로 다른 조명보다 성능이 떨어집니다.
