@@ -415,7 +415,7 @@ material.displacementMap = displacementTexture;
 
 ### 👨‍💻 PointsMaterial
 
-`Points` 가 기본으로 상요하는 `material` 입니다.
+`Points` 가 기본으로 사용하는 `material` 입니다.
 
 ### 👨‍💻 ShaderMaterial, RawShaderMaterial
 
