@@ -16,14 +16,18 @@
 
 # CSS
 
-|                                                             제목                                                              | 읽음 | 정리 |
-| :---------------------------------------------------------------------------------------------------------------------------: | :--: | :--: |
-|                                   [Understanding SVG Paths](https://www.nan.fyi/svg-paths)                                    |  ❌  |  ❌  |
-|           [Modern CSS Layout is Awesome](https://css-irl.info/video-modern-css-layout-is-awesome/?ref=heydesigner)            |  ❌  |  ❌  |
-|                     [Easy SVG sparklines](https://alexplescan.com/posts/2023/07/08/easy-svg-sparklines/)                      |  ❌  |  ❌  |
-|                                 [Animated SVG Logo](https://antfu.me/posts/animated-svg-logo)                                 |  ❌  |  ❌  |
-|                              [SVG versus Canvas](https://www.jointjs.com/blog/svg-versus-canvas)                              |  ❌  |  ❌  |
-| [Easy SVG Customization And Animation](https://www.smashingmagazine.com/2023/01/svg-customization-animation-practical-guide/) |  ❌  |  ❌  |
+|                                                                                    제목                                                                                     | 읽음 | 정리 |
+| :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------: | :--: | :--: |
+|                                                          [Understanding SVG Paths](https://www.nan.fyi/svg-paths)                                                           |  ❌  |  ❌  |
+|                                  [Modern CSS Layout is Awesome](https://css-irl.info/video-modern-css-layout-is-awesome/?ref=heydesigner)                                   |  ❌  |  ❌  |
+|                                            [Easy SVG sparklines](https://alexplescan.com/posts/2023/07/08/easy-svg-sparklines/)                                             |  ❌  |  ❌  |
+|                                                        [Animated SVG Logo](https://antfu.me/posts/animated-svg-logo)                                                        |  ❌  |  ❌  |
+|                                                     [SVG versus Canvas](https://www.jointjs.com/blog/svg-versus-canvas)                                                     |  ❌  |  ❌  |
+|                        [Easy SVG Customization And Animation](https://www.smashingmagazine.com/2023/01/svg-customization-animation-practical-guide/)                        |  ❌  |  ❌  |
+|                                [The complete guide to CSS media queries](https://polypane.app/blog/the-complete-guide-to-css-media-queries/)                                |  ❌  |  ❌  |
+|                                        [디자인 시스템 1편 - 디자인 가이드/디자인 시스템은 왜 필요한가](https://story.pxd.co.kr/1434)                                        |  ❌  |  ❌  |
+| [Don't Use Fixed CSS height or width on Buttons, Links, or Any Other Text Containers](https://ashleemboyer.com/blog/don-t-use-fixed-css-height-or-width-on-text-containers) |  ❌  |  ❌  |
+|                                                   [Classed components](https://flexible.dev/blog/single-line-components/)                                                   |  ❌  |  ❌  |
 
 # JavaScript
 
@@ -33,6 +37,7 @@
 |                           [You’ve Got Options for Removing Event Listeners](https://www.macarthur.me/posts/options-for-removing-event-listeners)                           |  ❌  |  ❌  |
 | [HOW TO CONSUME A PAGINATED API USING JAVASCRIPT ASYNC GENERATORS](https://jrsinclair.com/articles/2023/how-to-consume-a-paginated-api-using-javascript-async-generators/) |  ❌  |  ❌  |
 |                                               [The virtual keyboard API](https://ishadeed.com/article/virtual-keyboard-api/)                                               |  ❌  |  ❌  |
+|                                [Build your Own Virtual Scroll - Part I](https://dev.to/adamklein/build-your-own-virtual-scroll-part-i-11ib)                                |  ❌  |  ❌  |
 
 # TypeScript
 
@@ -68,9 +73,24 @@
 |                   [Build your own headless UI components](https://www.jacobparis.com/content/react-headless-submenus?ck_subscriber_id=2075819971)                   |  ❌  |  ❌  |
 |                                [Strongly Typing React Props with TypeScript](https://www.totaltypescript.com/react-props-typescript)                                |  ❌  |  ❌  |
 | [Deep dive into React's virtual DOM and reconciliation](https://borstch.com/blog/deep-dive-into-reacts-virtual-dom-and-reconciliation/?ck_subscriber_id=1747639579) |  ❌  |  ❌  |
+|           [Multiple Layers of Abstraction in Design Systems](https://engineering.atspotify.com/2023/05/multiple-layers-of-abstraction-in-design-systems/)           |  ❌  |  ❌  |
+| [Customization vs. Configuration in Evolving Design Systems](https://engineering.atspotify.com/2021/04/customization-vs-configuration-in-evolving-design-systems/)  |  ❌  |  ❌  |
+|                               ['Getting Closure on React Hooks'](https://www.rinae.dev/posts/getting-closure-on-react-hooks-summary)                                |  ❌  |  ❌  |
+|                                                    [Build your own React](https://pomb.us/build-your-own-react/)                                                    |  ❌  |  ❌  |
+|                           [Polymorphism in React: 2 patterns you must know](https://www.bekk.christmas/post/2023/1/polymorphism-in-react)                           |  ❌  |  ❌  |
+|                         [Headless Component: a pattern for composing React UIs](https://martinfowler.com/articles/headless-component.html)                          |  ❌  |  ❌  |
+|                                    [re-re-reselect — Simplifying React state management](https://causal.app/blog/re-re-reselect)                                    |  ❌  |  ❌  |
+|                                         [Building a drawer component](https://emilkowal.ski/ui/building-a-drawer-component)                                         |  ❌  |  ❌  |
+|         [How to Build a Server-Side React App Using Vite and Express](https://thenewstack.io/how-to-build-a-server-side-react-app-using-vite-and-express/)          |  ❌  |  ❌  |
+|                      [React Server Components: A comprehensive guide](https://blog.logrocket.com/react-server-components-comprehensive-guide/)                      |  ❌  |  ❌  |
+|                      [A Visual Guide to React Rendering - It Always Re-renders](https://alexsidorenko.com/blog/react-render-always-rerenders/)                      |  ❌  |  ❌  |
+|                                [Why we still use React HOCs](https://www.propelauth.com/post/why-we-have-both-react-hooks-and-hocs)                                 |  ❌  |  ❌  |
+|    [Making React Apps Memory Efficient \| Million.js Beyond Speed](https://dev.to/ricardonunezio/millionjs-beyond-speed-making-react-apps-memory-efficient-2amn)    |  ❌  |  ❌  |
+|                                                      [UI Composition](https://kyleshevlin.com/ui-composition)                                                       |  ❌  |  ❌  |
 
 # Vue
 
-|                                                     제목                                                     | 읽음 | 정리 |
-| :----------------------------------------------------------------------------------------------------------: | :--: | :--: |
-| [How to wrap, extend, or proxy a Vue component](https://blog.logrocket.com/wrap-extend-proxy-vue-component/) |  ❌  |  ❌  |
+|                                                               제목                                                                | 읽음 | 정리 |
+| :-------------------------------------------------------------------------------------------------------------------------------: | :--: | :--: |
+|           [How to wrap, extend, or proxy a Vue component](https://blog.logrocket.com/wrap-extend-proxy-vue-component/)            |  ❌  |  ❌  |
+| [Exploring Vue.js design patterns: From basic to advanced](https://blog.logrocket.com/exploring-advanced-design-patterns-vue-js/) |  ❌  |  ❌  |
