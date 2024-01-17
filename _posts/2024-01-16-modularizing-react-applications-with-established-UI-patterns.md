@@ -45,3 +45,48 @@ tags: [front-end, react]
 ![business-models-emerged](/assets/img/modularizing-react-applications-with-established-UI-patterns/business-models-emerged.png)
 
 분리한 도메인 로직들은 `non-view code` 이기 때문에, 상속 또는 다형성등과 같은 `OOP` 를 적용할 수 있습니다.
+
+## 💻 원칙 적용해 리펙토링 해보기
+
+위에서 살펴본 원칙을 바탕으로 쇼핑몰 서비스에서 결제 방법을 선택하는 컴포넌트와 로직을 리펙토링 해보겠습니다.
+
+![original-payment-code](/assets/img/modularizing-react-applications-with-established-UI-patterns/original-payment-code.png)
+
+위의 `Payment` 컴포넌트는 결제 방법들을 서버에서 불러온 후, 데이터 가공 후 `view` 에 보여주고 있습니다.
+
+### 👨‍💻 문제점
+
+`Payment` 컴포넌트를 이해하기 위해서는 <span style="color: orange;">네트워크 요청 로직</span>, <span style="color: blue;">데이터 변환 및 맵핑 로직</span>, <span style="color: red;">서버로 부터 받아온 결제 방법을 렌더링 하는 로직</span>,
+<span style="color: green">Payment 컴포넌트 자체의 렌더링 로직</span> 을 모두 이해해야 합니다.
+
+![original-payment-code-separate](/assets/img/modularizing-react-applications-with-established-UI-patterns/original-payment-code-separate.png)
+
+### 👨‍💻 하위 컴포넌트 추출을 통한 view 분할 (= 다중 컴포넌트 애플리케이션)
+
+결제 방법 렌더링 로직을 `Payment` 컴포넌트로 분리해보겠습니다.
+
+![original-payment-code-payment-method](/assets/img/modularizing-react-applications-with-established-UI-patterns/original-payment-code-payment-method.png)
+
+`PaymentMethod` 컴포넌트를 생성하면 `Payment` 컴포넌트는 아래와 같이 단순화할 수 있습니다.
+![original-payment-code-apply-payment-methods](/assets/img/modularizing-react-applications-with-established-UI-patterns/original-payment-code-apply-payment-methods.png)
+
+### 👨‍💻 View code 와 non-view code 코드 분리 (= Hooks 을 이용한 상태관리)
+
+`non-view code` 와 그와 관련된 상태를 `hook` 으로 분리해보겠습니다.
+
+![original-payment-code-hook](/assets/img/modularizing-react-applications-with-established-UI-patterns/original-payment-code-hook.png)
+
+### 👨‍💻 로직을 캡슐화하는 데이터 모델링 (= 비즈니스 모델의 등장)
+
+위 단계를 통해 `Payment` 컴포넌트의 `view-code` 는 작은 단위로 나눠 재사용성이 높아졌고, `non-view code` 는 `view code` 로 부터 분리되어 가독성과 유지보수성이 높아졌습니다.  
+이제 분리된 `non-view code` 를 책임에 따라 세분화 해보겠습니다.
+
+우선 `PaymentMethod` 컴포넌트에서 기본 결제 수단을 검증하는 로직 (`method.provider === 'cash'`) 을 살펴 보겠습니다. 이 로직은 데이터의 형태가 변경되는 경우 수정이 필요하며, 만약 흩어져 있는 경우에는 더 큰 문제를 야기할 수 있습니다.  
+이 문제는 `usePaymentMethods` `hook` 에서 데이터 변환 로직을 클래스로 분리한 후, 해당 클래스에 검증로직을 포함하면 해결 할 수 있습니다.
+
+![original-payment-code-business-logic](/assets/img/modularizing-react-applications-with-established-UI-patterns/original-payment-code-business-logic.png)
+
+#### 📔 참고자료
+
+[[번역] 잘 알려진 UI 패턴을 사용하여 리액트 애플리케이션 모듈화하기](https://velog.io/@eunbinn/modularizing-react-apps)  
+[Modularizing React Applications with Established UI Patterns](https://martinfowler.com/articles/modularizing-react-apps.html)
