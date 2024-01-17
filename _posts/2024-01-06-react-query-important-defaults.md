@@ -69,3 +69,9 @@ useQuery({
 
 `Query` 가 실패하면, 기본적으로 3번의 재시도가 발생하게 되며, 매 시도마다 2배의 지연시간이 생기게 됩니다.  
 이 동작은 `retry`, `retryDelay` 를 통해 재설정할 수 있습니다.
+
+#### 📔 참고자료
+
+[Important Defaults](https://tanstack.com/query/v4/docs/react/guides/important-defaults)  
+[Practical React Query](https://tkdodo.eu/blog/practical-react-query)  
+[React Query as a State Manager](https://tkdodo.eu/blog/react-query-as-a-state-manager)
