@@ -53,7 +53,7 @@
 |                              [The Interactive Guide to Rendering in React](https://ui.dev/c/react/renders?ck_subscriber_id=1747639579)                              |  ❌  |  ❌  |
 |                                                         [Managing Effects](https://ui.dev/c/react/effects)                                                          |  ❌  |  ❌  |
 |                        [HEADLESS USER INTERFACE COMPONENTS](https://www.merrickchristensen.com/articles/headless-user-interface-components/)                        |  ❌  |  ❌  |
-|                          [Modularizing React Applications with Established UI Patterns](https://velog.io/@eunbinn/modularizing-react-apps)                          |  ❌  |  ❌  |
+|                          [Modularizing React Applications with Established UI Patterns](https://velog.io/@eunbinn/modularizing-react-apps)                          |  ⭕️  |  ⭕️  |
 |                            [Strongly Type useRef with ElementRef](https://www.totaltypescript.com/strongly-type-useref-with-elementref)                             |  ❌  |  ❌  |
 |          [Partially Controlled Components: A Declarative Design Pattern in React](https://www.jameskerr.blog/posts/partially-controlled-react-components/)          |  ❌  |  ❌  |
 |                               [Understanding React Server Components](https://vercel.com/blog/understanding-react-server-components)                                |  ❌  |  ❌  |
