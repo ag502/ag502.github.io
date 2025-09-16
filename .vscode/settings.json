@@ -4,7 +4,8 @@
     "javascript",
     "javascriptreact",
     "typescript",
-    "typescriptreact"
+    "typescriptreact",
+    "mdx"
   ],
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "always"

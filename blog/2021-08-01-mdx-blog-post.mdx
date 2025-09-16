@@ -17,15 +17,29 @@ Use the power of React to create interactive blog posts.
 
 For example, use JSX to create an interactive button:
 
+```jsx title="/src/components/HelloCodeTitle.js"
+function HelloCodeTitle(props) {
+  return <h1>Hello, {props.name}</h1>;
+}
+```
+
+```jsx
+<button onClick={() => alert('button clicked!')}>Click me!</button>
+```
+
 ```js
-<button 
-onClick={() => alert('button clicked!')}>Click me!</button>
+const a = 1;
 ```
 
 <div>
-  ```js  
-  export function foo(){ return 'bar'}
-  ```
+```js 
+const a = 1; 
+export function foo() { 
+  console.log("foo");
+  return "bar";
+}
+```
 </div>
 
 <button onClick={() => alert('button clicked!')}>Click me!</button>
+```
