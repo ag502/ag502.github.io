@@ -91,7 +91,7 @@ const tseslintConfig = tseslint.config(
   {
     ...configs.disableTypeChecked,
     name: 'custom/ts-eslint/disable-type-checked',
-    files: ['**/*.(c|m)js'],
+    files: ['**/*.(c|m)js', '**/*.mdx/**'],
   },
 );
 
@@ -144,6 +144,7 @@ const mdxConfig = [
       'no-var': 'error',
       'prefer-const': 'error',
       'react/prop-types': 'off',
+      'react/jsx-no-undef': 'off',
     },
   },
 ] as FlatConfig.ConfigArray;
