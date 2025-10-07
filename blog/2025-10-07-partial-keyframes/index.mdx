@@ -1,0 +1,207 @@
+---
+slug: partial-keyframes
+title: Partial Keyframes
+tags: [CSS, Animation]
+unlisted: true
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+지금 까지, 우리는 아래처럼 `from` 과 `to` 값을 키프레임에 명시하여 사용했습니다.
+
+```css
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+```
+
+흥미롭게도 우리는 두개의 값 모두 명시할 필요 없습니다. 키프레임 정의를 조금 더 간결하게 작성할 수 있습니다.
+
+```css
+@keyframes fadeToTransparent {
+  to {
+    opacity: 0;
+  }
+}
+```
+
+이는 꽤 멋진 사이드 이펙트를 발생 시킵니다. `from` 값을 명시하지 않았으므로, 요소는 현재 `opacity` 값에서 애니메이션이 적용될 것입니다.
+
+우리가 계속 해왔던 설정은 첫번째 노란색 공처럼 기본적으로 `opacity` 값이 1일 때만 정상적으로 동작합니다.
+다른 공들은 점진적으로 흐려지기전에 투명도가 1로 바뀝니다.
+
+![snap-to-full-opacity](./snap-to-full-opacity.mp4)
+
+반대로, 데모를 "Full" 에서 "Partial"로 변경했을때 어떻게 동작하는지 확인해보세요.
+애니메이션은 요소의 현재 `opacity` 값을 상속 받아 그 값에서 부터 흐려지기 시작합니다.
+
+해당 동작을 그래프로 시작화하면 다음과 같습니다.
+
+<Tabs>
+  <TabItem value="full" label="Full Keyframes">
+    <img src={require('./full-keyframes-setting-graph.png').default} />
+  </TabItem>
+  <TabItem value="partial" label="Partial Keyframes">
+    <img src={require('./partial-keyframes-setting-graph.png').default} />
+  </TabItem>
+</Tabs>
+
+```html
+<style>
+  @keyframes fadeToTransparent {
+    to {
+      opacity: 0;
+    }
+  }
+
+  .ball {
+    background: hsl(50deg 100% 50%);
+    border-radius: 45%;
+    width: 64px;
+    height: 64px;
+  }
+
+  .to-transparent {
+    animation: fadeToTransparent 1000ms forwards;
+  }
+</style>
+
+<div class="row">
+  <div class="ball"></div>
+  <div class="ball" style="opacity: 0.6"></div>
+  <div class="ball" style="opacity: 0.3"></div>
+</div>
+```
+
+위 예시에서, `opacity` 값이 `<div style="opacity: 0.6">` 처럼 inline style로 설정되어 있지만 필수는 아닙니다.
+`opacity` 속성을 CSS 클래스로 추가하거나 다른 CSS 적용 방법을 사용해도 정상적으로 동작합니다.
+
+위 예시에서 첫번째 `.ball` 클래스와 같이 요소에 `opacity` 속성이 없는 경우 기본값인 `1`이 사용됩니다.
+이는 굉장히 유용한 기능인데, `fadeToTransparent` 키프레임을 `fadeOut` 키프레임처럼 사용하기 쉽다는 것을 의미하기 때문입니다.
+이를 이용하면 페이드 아웃 효과를 내기 위해 `opacity: 1`을 명시적으로 설정할 필요가 없습니다.
+
+## 🌃 Omitting the destination
+
+같은 트릭이 반대 방향에서도 적용됩니다. 만약 `to` 값을 생략한다면, 애니메이션은 명시한 값에서 현재 설정된 값으로 변경될 것 입니다.
+
+```html
+<style>
+  @keyframes fadeFromTransparent {
+    from {
+      opacity: 0;
+    }
+  }
+
+  .ball {
+    animation: fadeFromTransparent 1000ms;
+  }
+</style>
+
+<div class="ball" style="opacity: 0.6"></div>
+```
+
+위 예시에서, 애니메이션은 `0`에서 요소에 설정된 `opacity` 값으로 변경됩니다.
+만약 요소에 명시적으로 설정된 `opacity` 값이 없다면, 기본값 `1`로 설정되어 앞서 살펴보았던 fade-in 애니메이션처럼 동작할 것입니다.
+
+이 트릭은 어떨때 사용할까요? 이 트릭은 요소가 기본적으로 완전히 뚜렷한 상태를 가지고 있지 않거나, 상태 기반의 투명도를 가질 때 유용합니다.
+
+```html
+<style>
+  @keyframes fadeFromTransparent {
+    from {
+      opacity: 0;
+    }
+  }
+
+  .icon-btn {
+    opacity: 0.7;
+    animation: fadeFromTransparent 1000ms;
+
+    &:hover,
+    &:active &:focus-visible {
+      opacity: 1;
+    }
+  }
+</style>
+
+<button class="icon-btn"></button>
+```
+
+위 예시에서의 버튼은 기본적으로 `0.7`의 opacity를 가지고 있지만, 호버나 포커스가 생길 때 `1`로 변경됩니다.
+이 UX 효과는 해당 요소가 인터렉티브함을 전달하기 때문에 유용합니다.
+
+이 버튼은 페이지가 로드될 때 서서히 나타나며, 올바른 `opacity` 값으로 변경하기 위해 partial keyframes 트릭을 사용했습니다.
+만약 애니메이션이 동작중일 때, 호버가 발생하게되면 값이 `1`로 설정되며 그렇지 않은 경우 `0.7`로 설정됩니다.
+
+## 🌃 Animating to a dynamic value
+
+여기서 살펴볼 트릭은 다른 keyframe 애니메이션에서 설정된 `opacity` 값으로 애니메이션을 적용할 수 있게합니다.
+
+```html
+<style>
+  @keyframes twinkle {
+    from {
+      opacity: 0.25;
+    }
+    to {
+      opacity: 0.75;
+    }
+  }
+
+  @keyframes fadeFromTransparent {
+    from {
+      opacity: 0;
+    }
+  }
+
+  .ball {
+    animation:
+      twinkle 350ms alternate infinite,
+      fadeFromTransparent 1000ms;
+  }
+</style>
+
+<div class="ball"></div>
+```
+
+위 예시코드가 어떻게 동작하는지 살펴보겠습니다.
+
+- `twinkle` keyframe은 공의 `opacity` 값을 `0.25`에서 `0.75` 사이에서 계속 변경되게 합니다.
+  `alternate` 키워드로 인해 값이 정방향에서 역방향, 역방향에서 정방향으로 변경되며, `infinite` 키워드로 인해 무한하게 반복합니다.
+- `fadeFromTransparent` keyframe은 `opacity`의 초기값을 `0`으로 설정했지만, target `opacity`의 값은 설정하지 않았습니다.
+- 두개를 합치게 되면, `0`에서 `twinkle`이 만들어내는 변화하는 값으로 서서히 전환됩니다. 다시말해, `twinkle` 애니메이션 효과가 점진적으로 적용됩니다.
+
+`opacity`의 변화를 그래프로 표현해 어떻게 변경되는지 확인해보겠습니다.
+
+<Tabs>
+  <TabItem value="twinkle" label="Twinkle">
+    <img src={require('./twinkle.png').default} />
+  </TabItem>
+  <TabItem value="fadeFromTransparent" label="Fade From Transparent">
+    <img src={require('./fadeFromTransparent.png').default} />
+  </TabItem>
+  <TabItem value="combined" label="Combined">
+    <img src={require('./twinkle+fadeFromTransparent.png').default} />
+  </TabItem>
+</Tabs>
+
+정말 놀랍지 않나요? 여러 개의 keyframe 애니메이션이 서로를 취소하지 않고 같은 속성을 수정할 수 있습니다.
+
+:::info Keyframe 순서
+앞서 살펴본 트릭이 동작하기 위해서는 partial keyframe(위 예제에서 `fadeFromTransparent`)이 full keyframe(위 예제에서 `twinkle`) 보다 뒤에 와야 합니다.
+만약 순서가 바뀐다면 `fadeFromTransparent`은 아무런 효과가 없을 것 입니다.
+
+왜 이런일이 일어날까요? 제 생각에는, 브라우저가 정의된 순서대로 keyframe들을 병합하려고 하기 때문인 것 같습니다.
+다시 말해, 충돌이 발생한다면 마지막 keyframe 애니메이션이 우선시 된다는 뜻 입니다.
+
+만약 full keyframe인 `twinkle`이 마지막에 온다면, `fadeFromTransparent`에 정의되어 있던 모든것을 덮어쓰게 됩니다.
+브라우저는 필요한 모든 정보를 가졌으나, `fadeFromTransparent` 애니메이션은 `to` 값이 비어있습니다. 브라우저에게 충분한 정보를 제공하지 않았기 때문에 이전에 정의했었던 keyframe 값을 덮어쓰게 됩니다.
+
+따라서, 만약 이 트릭을 사용했는데 문제가 발생한다면, `animation` 프로퍼티에 올바른 순서대로 적용되었는지 확인할 필요가 있습니다.
+:::
