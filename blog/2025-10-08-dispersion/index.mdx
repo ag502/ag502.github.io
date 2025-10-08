@@ -1,0 +1,513 @@
+---
+slug: dispersion
+title: Dispersion
+tags: [CSS, Animation]
+unlisted: true
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+아직 이 효과의 가장 중요한 부분을 다루지 않았습니다! 파티클들은 중앙에서 모든 방향으로 퍼져야 합니다.
+
+아래는 현재까지 구현된 코드입니다.
+
+<Tabs>
+  <TabItem value="index.html" label="index.html">
+    ```html 
+    <style>
+    @keyframes fadeToTransparent {
+        to {
+            opacity: 0;
+        }
+    }
+    .particle {
+        position: absolute;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: white;
+        transform: translate(-50%, -50%);
+        pointer-events: none;
+        animation: fadeToTransparent forwards;
+    }
+    </style>
+
+    <button class="particleButton">
+        <!-- 하트 svg -->
+    </button>
+    ```
+
+  </TabItem>
+
+<TabItem value="index.js" label="index.js">
+```js
+import { random, range } from 'lodash';
+const btn = document.querySelector('.particleButton');
+const FADE_DURATION = 1000;
+btn.addEventListener('click', () => {
+    btn.classList.toggle('liked');
+    const isLiked = btn.classList.contains('liked');
+    if (!isLiked) {
+        return;
+    }
+    const particles = [];
+    range(5).forEach(() => {
+        const particle = document.createElement('span');
+        particle.classList.add('particle');
+        particle.style.top = random(0, 100) + '%';
+        particle.style.left = random(0, 100) + '%';
+        particle.style.animationDuration = FADE_DURATION + 'ms';
+        btn.appendChild(particle);
+        particles.push(particle);
+    });
+    window.setTimeout(() => {
+        particles.forEach((particle) => {
+            particle.remove();
+        });
+    }, FADE_DURATION + 200);
+});
+```
+</TabItem>
+<TabItem value="index.css" label="index.css">
+```css
+html {
+    --red: oklch(0.65 0.3 19.41);
+}
+body {
+    display: grid;
+    place-content: center;
+    height: 100vh;
+    background: hsl(210deg 15% 6%);
+}
+.particleButton {
+    position: relative;
+    padding: 16px;
+    background: transparent;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    &:hover {
+        background: hsl(0deg 0% 100% / 0.1);
+        path {
+            stroke: var(--red);
+        }
+    }
+    &.liked path {
+        fill: var(--red);
+        stroke: var(--red);
+    }
+}
+.particleButton svg {
+    position: relative;
+    display: block;
+    width: 3rem;
+    height: 3rem;
+}
+.visually-hidden:not(:focus):not(:active) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+```
+</TabItem>
+</Tabs>
+
+위의 구현에서 `top`과 `left`에 랜덤한 값을 대입하였고, 해당 값에 파티클들이 바로 나타나게 됩니다.
+이제 버튼의 중심으로부터 퍼져나가는 효과를 적용하는 몇가지 방법을 살펴보겠습니다.
+
+첫번째 방법은 `setTimeout`과 함께 CSS transition을 사용하는 방법 입니다.
+
+```js
+range(5).forEach(() => {
+  const particle = document.createElement('span');
+  particle.classList.add('particle');
+
+  // Set the starting position
+  particle.style.top = '50%';
+  particle.style.left = '50%';
+
+  // Set up the animation properties
+  particle.style.transition = 'top 500ms, left 500ms';
+  particle.style.animationDuration = FADE_DURATION + 'ms';
+
+  // Wait for those previous changes to be flushed to the
+  // DOM before updating their position:
+  window.setTimeout(() => {
+    particle.style.top = random(0, 100) + '%';
+    particle.style.left = random(0, 100) + '%';
+  }, 1);
+
+  btn.appendChild(particle);
+  particles.push(particle);
+});
+```
+
+이 방법은 동작하지만 이상적은 방법은 아닙니다. `window.requestAnimationFrame`을 사용하면 조금 더 나을 수 있지만 사실 좀더 나은 접근방법이 있습니다.
+
+문제는 CSS transition이 상태들 사이의 전이를 위한 것이라는 것입니다. 예를 들어, 호버 효과는 다른 배경색을 적용할 수 있으므로 기본 상태와 호버 상태 사이를 전환할 수 있습니다.
+
+이 경우에 파티클들은 사실 상태간의 전이가 아닙니다. 상태간의 전이라기보다는 애니메이션의 진입과 관련되어 있습니다.
+
+앞에서 본 코드의 변경사항을 제거하고 새로운 접근법을 적용해 보겠습니다.
+
+```css
+@keyframes disperse {
+  from {
+    top: 50%;
+    left: 50%;
+  }
+  to {
+    /* TODO */
+  }
+}
+
+.particle {
+  animation:
+    fadeToTransparent forwards,
+    disperse;
+}
+```
+
+Keyframe 애니메이션을 이용하는 방법이 까다로운 점은 모든 `.particle` 인스턴스가 동일한 keyframe 정의를 사용한다는 것 입니다.
+`to` 블록에 랜덤한 top/left 값이 들어가야하는데, 이렇게 되면 모든 파티클들이 동일한 위치로 이동하게 됩니다.
+
+[Partial Keyframes](../2025-10-07-partial-keyframes/index.mdx)을 사용하면 문제를 해결할 수 있습니다. 파티클의 최종위치를 정의할 필요가 없습니다.
+
+```CSS
+@keyframes fromCenter {
+    from {
+        top: 50%;
+        left: 50%;
+    }
+}
+```
+
+파티클의 최종위치를 JavaScript를 통해 인라인 스타일로 정의했기 때문에 이 방식은 동작합니다.
+
+```javascript
+particle.style.top = random(0, 100) + '%';
+particle.style.left = random(0, 100) + '%';
+```
+
+각각의 파티클들은 50%50%에서 각자 정의된 랜덤한 값으로 이동하게 됩니다.
+
+이 방법의 유일한 문제는 두개의 애니메이션(중심에서 퍼져나가는 애니메이션, 사라지는 애니메이션)이 동일한 duration을 공유한다는 것입니다 (FADE_DURATION으로 설정된 값).
+퍼지는 애니메이션은 빠르게, 사라지는 애니메이션은 느리게 동작하면 더 좋을거 같습니다.
+
+이 문제는 CSS 커스텀 프로퍼티를 사용하면 해결할 수 있습니다. 아래의 예시를 통해 살펴보겠습니다.
+
+CSS 변수(CSS 커스텀 프로퍼티)를 사용하여 애니메이션별로 올바른 fade duration을 적용하겠습니다.
+
+<Tabs>
+  <TabItem value="index.html" label="index.html">
+    ```html 
+    <style>
+    @keyframes fadeToTransparent {
+        to {
+            opacity: 0;
+        }
+    }
+    @keyframes fromCenter {
+        from {
+            top: 50%;
+            left: 50%;
+        }
+    }
+    .particle {
+        position: absolute;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: white;
+        transform: translate(-50%, -50%);
+        pointer-events: none;
+        animation: fadeToTransparent var(--fade-duration) forwards, fromCenter 500ms;
+    }
+    </style>
+
+    <button class="particleButton">
+        <!-- 하트 svg -->
+    </button>
+    ```
+
+  </TabItem>
+
+<TabItem value="index.js" label="index.js">
+```js
+import { random, range } from 'lodash';
+const btn = document.querySelector('.particleButton');
+const FADE_DURATION = 1000;
+btn.addEventListener('click', () => {
+    btn.classList.toggle('liked');
+    const isLiked = btn.classList.contains('liked');
+    if (!isLiked) {
+        return;
+    }
+    const particles = [];
+    range(5).forEach(() => {
+        const particle = document.createElement('span');
+        particle.classList.add('particle');
+        particle.style.top = random(0, 100) + '%';
+        particle.style.left = random(0, 100) + '%';
+        particle.style.setProperty('--fade-duration', FADE_DURATION + 'ms');
+        btn.appendChild(particle);
+        particles.push(particle);
+    });
+    window.setTimeout(() => {
+        particles.forEach((particle) => {
+            particle.remove();
+        });
+    }, FADE_DURATION + 200);
+});
+```
+</TabItem>
+<TabItem value="index.css" label="index.css">
+```css
+html {
+    --red: oklch(0.65 0.3 19.41);
+}
+body {
+    display: grid;
+    place-content: center;
+    height: 100vh;
+    background: hsl(210deg 15% 6%);
+}
+.particleButton {
+    position: relative;
+    padding: 16px;
+    background: transparent;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    &:hover {
+        background: hsl(0deg 0% 100% / 0.1);
+        path {
+            stroke: var(--red);
+        }
+    }
+    &.liked path {
+        fill: var(--red);
+        stroke: var(--red);
+    }
+}
+.particleButton svg {
+    position: relative;
+    display: block;
+    width: 3rem;
+    height: 3rem;
+}
+.visually-hidden:not(:focus):not(:active) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+```
+</TabItem>
+</Tabs>
+
+## 🌃 Alternative Approach
+
+지금까지의 파티클 애니메이션에서는 `top`과 `left`에 0%에서 100%까지 무작위 값을 선택하여 각 파티클을 무작위로 배치했습니다.
+
+설정한 퍼센트 값은 '좋아요' 버튼, 다시말해 파티클의 컨테이너를 기준으로 합니다.
+
+<div style={{ display: 'flex', justifyContent: 'center' }}>
+  <img
+    src={require('./percentage-based-on-container.png').default}
+    style={{ width: '50%' }}
+  />
+</div>
+
+잘 동작하지만, 저에게는 자연스럽거나 직관적이지 않습니다. 이 설정은 파티클들이 버튼의 중심이 아니라 왼쪽 상단 모서리에서 나오는듯한 느낌을 줍니다.
+
+그리고 백분율을 사용하는것이 꼭 좋은 선택인지는 모르겠습니다. 빠르고 쉽기 때문에 이 방법을 택했지만, 픽셀 단위를 사용하는 것이 좀더 직관적일 것 같습니다.
+파티클은 중심에서 시작해야 하며 해당 위치에서 0px~50px 범위로 퍼져야 한다고 말할 수 있어야 합니다.
+
+다시말해, 아래의 세팅이 좀더 자연스러울거 같습니다.
+
+<div style={{ display: 'flex', justifyContent: 'center' }}>
+  <img
+    src={require('./pixel-based-on-container.png').default}
+    style={{ width: '50%' }}
+  />
+</div>
+
+위 설정이 좀 더 나은 멘탈 모델이며, 코드도 좀더 간단하게 작성됩니다.
+
+`top`과 `left`를 이용해 위치시키는것 대신에 `transform`을 사용해 리펙토링 해보겠습니다.
+
+기본적인 전략은 다음과 같습니다. 추가적인 값 설정없이 모든 파티클들을 버튼에 중심에 위치시킵니다.
+그런다음 `transform: translate()`을 사용하여 각각의 파티클들을 랜덤한 값만큼 이동시킵니다.
+
+파티클들을 중심에 위치시키는 방법은 많지만 저는 'auto margin' 방법을 선호합니다.
+
+```css
+.centered {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 12px;
+  height: 12px;
+}
+```
+
+만약 이 방식이 익숙하지 않다면, [How to Center a Div](https://www.joshwcomeau.com/css/center-a-div/#centering-with-positioned-layout-3)글에 더 자세한 정보가 있습니다.
+
+이 방식은 파티클을 한 가운데에 위치시킵니다. 추가로 `transform: translate(-50%, -50%)` 속성도 제거 할 수 있습니다.
+auto margin 방식은 transform 속성을 사용하지 않고도 요소를 가운데 위치시킬 수 있습니다.
+
+처음에 구현했던 방식은, 각각의 파티클을 `0%`에서 `100%` 사이로 랜덤하게 배치되었습니다.
+새로운 방법에서는 픽셀 단위의 양수또는 음수의 무작위 값을 사용합니다.
+
+```js
+const x = random(-48, 48);
+const y = random(-48, 48);
+particle.style.transform = `translate(${x}px, ${y}px)`;
+```
+
+이 방식이 제대로 동작하려면, keyframe 애니메이션을 수정해야 합니다.
+
+```css
+@keyframes fromCenter {
+  from {
+    transform: translate(0, 0);
+  }
+}
+```
+
+여기까지 작성한 코드는 정상적으로 동작하지만 한가지만 더 수정하겠습니다. 48이라는 값을 4번씩이나 반복하고 싶지 않기때문에 상수로 분리하겠습니다.
+
+```js
+const MAGNITUDE = 48;
+
+btn.addEventListener('click', () => {
+  // ...
+
+  const x = random(-MAGNITUDE, MAGNITUDE);
+  const y = random(-MAGNITUDE, MAGNITUDE);
+});
+```
+
+최종 결과물은 아래와 같습니다.
+
+<Tabs>
+  <TabItem value="index.html" label="index.html">
+    ```html 
+    <style>
+    @keyframes fadeToTransparent {
+        to {
+            opacity: 0;
+        }
+    }
+    @keyframes fromCenter {
+        from {
+            transform: translate(0, 0);
+        }
+    }
+    .particle {
+        position: absolute;
+        inset: 0;
+        margin: auto;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: white;
+        pointer-events: none;
+        animation: fadeToTransparent var(--fade-duration) forwards, fromCenter 500ms;
+    }
+    </style>
+
+    <button class="particleButton">
+        <!-- 하트 svg -->
+    </button>
+    ```
+
+  </TabItem>
+
+<TabItem value="index.js" label="index.js">
+```js
+import { random, range } from 'lodash';
+const btn = document.querySelector('.particleButton');
+const FADE_DURATION = 1000;
+const MAGNITUDE = 48;
+btn.addEventListener('click', () => {
+    btn.classList.toggle('liked');
+    const isLiked = btn.classList.contains('liked');
+    if (!isLiked) {
+        return;
+    }
+    const particles = [];
+    range(5).forEach(() => {
+        const particle = document.createElement('span');
+        particle.classList.add('particle');
+        const x = random(-MAGNITUDE, MAGNITUDE);
+        const y = random(-MAGNITUDE, MAGNITUDE);
+        particle.style.transform = `translate(${x}px, ${y}px)`;
+        particle.style.setProperty('--fade-duration', FADE_DURATION + 'ms');
+        btn.appendChild(particle);
+        particles.push(particle);
+    });
+    window.setTimeout(() => {
+        particles.forEach((particle) => {
+            particle.remove();
+        });
+    }, FADE_DURATION + 200);
+});
+```
+</TabItem>
+<TabItem value="index.css" label="index.css">
+```css
+html {
+    --red: oklch(0.65 0.3 19.41);
+}
+body {
+    display: grid;
+    place-content: center;
+    height: 100vh;
+    background: hsl(210deg 15% 6%);
+}
+.particleButton {
+    position: relative;
+    padding: 16px;
+    background: transparent;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    &:hover {
+        background: hsl(0deg 0% 100% / 0.1);
+        path {
+            stroke: var(--red);
+        }
+    }
+    &.liked path {
+        fill: var(--red);
+        stroke: var(--red);
+    }
+}
+.particleButton svg {
+    position: relative;
+    display: block;
+    width: 3rem;
+    height: 3rem;
+}
+.visually-hidden:not(:focus):not(:active) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+```
+</TabItem>
+</Tabs>
