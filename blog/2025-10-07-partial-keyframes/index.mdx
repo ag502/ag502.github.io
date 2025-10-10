@@ -36,7 +36,15 @@ import TabItem from '@theme/TabItem';
 우리가 계속 해왔던 설정은 첫번째 노란색 공처럼 기본적으로 `opacity` 값이 1일 때만 정상적으로 동작합니다.
 다른 공들은 점진적으로 흐려지기전에 투명도가 1로 바뀝니다.
 
-![snap-to-full-opacity](./snap-to-full-opacity.mp4)
+<div style={{ display: 'flex', justifyContent: 'center' }}>
+  <video
+    width="70%"
+    src={require('./snap-to-full-opacity.mp4').default}
+    muted
+    autoPlay
+    loop
+  />
+</div>
 
 반대로, 데모를 "Full" 에서 "Partial"로 변경했을때 어떻게 동작하는지 확인해보세요.
 애니메이션은 요소의 현재 `opacity` 값을 상속 받아 그 값에서 부터 흐려지기 시작합니다.
