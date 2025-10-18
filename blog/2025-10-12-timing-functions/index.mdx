@@ -114,3 +114,100 @@ Timing function은 CSS transition과 keyframe animation 모두 사용할 수 있
 </Tabs>
 
 각각의 내장 키워드는 목적이 있습니다. 각각의 목적과 어떤걸 사용하면 될지 결정하는 방법을 알아보겠습니다.
+
+## 🌃 구체적인 활용 예시
+
+CSS에 내장된 timing function들을 살펴보았는데, 이것들을 언제 사용해야하는지에 대한 물음이 생깁니다.
+
+이에 대한 답은 상황에 따라 다릅니다. 각각의 timing function마다 가장 잘 맞는 사용 사례가 있습니다. 하나씩 살펴보겠습니다.
+
+### 🎆 linear
+
+저는 `linear` timing function을 회전에 자주 사용합니다. 아래와 같은 로딩 스피너가 예시 입니다.
+
+```css
+animation: spin 750ms linear infinite;
+```
+
+<div style={{ display: 'flex', justifyContent: 'center' }}>
+  <video src={require('./linear-spinner.mov').default} autoPlay loop muted />
+</div>
+
+대부분의 경우, 선형 움직임은 인위적인것 처럼 보이지만, 무한한 회전에 적용하면 굉장히 자연스러워 보입니다.
+
+### 🎆 ease-in
+
+`ease-in` timing function은 처음에 천천히 움직였다가 나중에 빠르게 움직이며 설정된 지속시간 후에 멈춥니다.
+
+이 timing function은 퇴장 애니메이션에 유용합니다.
+
+```css
+animation: runAway 500ms ease-in;
+```
+
+<div style={{ display: 'flex', justifyContent: 'center' }}>
+  <video src={require('./ease-in-exiting.mov').default} autoPlay loop muted />
+</div>
+
+이 방식은 요소가 화면 밖으로 날아가는 것처럼, 시야 밖에서도 계속 가속하고 있다는 느낌을 주고 싶을 때 유용합니다. 즉, 지속적인 움직임을 표현할 때 적합합니다.
+
+솔직히 말씀드리자면, 기본적인 `ease-in` timing function은 약간 실망스럽습니다. 아이디어는 괜찮지만 timing function의 효과가 너무 약한것 같습니다.
+
+아래에서 나만의 timing function을 만드는 방법을 알아보고, 좀더 극적인 버전의 easing curve를 만들어 보겠습니다.
+
+### 🎆 ease-out
+
+`ease-out`은 `ease-in`과 반대인 timing function 입니다. 따라서 화면 밖에서 나타나는 무언가를 표현하기 적합합니다.
+
+```css
+animation: enterFromOffscreen 500ms ease-out;
+```
+
+<div style={{ display: 'flex', justifyContent: 'center' }}>
+  <video src={require('./ease-out-appear.mov').default} autoPlay loop muted />
+</div>
+
+`ease-out`은 점점 느려지면서 멈추기 때문에 움직임이 갑작스럽게 끝나지 않고 자연스럽게 마무리됩니다.
+
+`ease-out` 역시 제 취향은 아닌것 같습니다. 아래에서 좀 더 나은 효과를 만들어 보겠습니다.
+
+### 🎆 ease-in-out
+
+`ease-in-out`은 `ease-in`과 `ease-out`의 조합입니다. 시작할때의 가속과 끝날때의 감속이 정확이 같은 양만큼 발생하기 때문에 완벽히 대칭이라 할 수 있습니다.
+
+이러한 대칭성은 alternate 키워드를 사용할 때 유용합니다. 즉, 값이 두 지점 사이를 오가며 진동(oscillate)할 때 자연스러운 움직임을 만들어줍니다.
+
+```css
+animation: oscillate 750ms ease-in-out infinite alternate;
+```
+
+<div style={{ display: 'flex', justifyContent: 'center' }}>
+  <video
+    src={require('./ease-in-out-oscillate.mov').default}
+    autoPlay
+    loop
+    muted
+  />
+</div>
+
+`linear`는 딱딱한 느낌이고, `ease`는 불균형한 느낌이지만, `ease-in-out`은 이 상황에서 적용하기 완벽합니다.
+
+### 🎆 ease
+
+만약 명시적으로 timing function을 설정하지 않는다면, `ease`가 기본값입니다.
+
+`ease-in-out`과 비슷하지만, 대칭이 아닙니다. 처음에 가속은 짧은시간동안 이루어지지만, 감속은 더 오래걸립니다.
+
+앞서 살펴보았던 timing function들은 사용하기 적합한 상황들이 있었습니다. `ease`는 좀더 광범위하게 사용할 수 있습니다.
+이 효과는 꽤 괜찮기 때문에 기본값으로 설정한것이 납득이 됩니다.
+
+```css
+animation: transform 500ms ease;
+```
+
+<div style={{ display: 'flex', justifyContent: 'center' }}>
+  <video src={require('./ease-broad.mov').default} autoPlay loop muted />
+</div>
+
+`ease-in-out`과 비교해봤을 때, `ease`는 빠르고 쾌적한 느낌이 드는 반면 `ease-in-out`은 약간 느린 느낌입니다.
+또한 `ease`가 감속에 시간을 더 오래 쓰기때문에 좀 더 부드럽습니다.
