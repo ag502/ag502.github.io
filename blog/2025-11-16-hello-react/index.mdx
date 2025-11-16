@@ -1,0 +1,191 @@
+---
+slug: hello-react
+title: Hello React
+tags: [React]
+unlisted: true
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+이 문서는 색인되지 않습니다.
+
+{/* truncate */}
+React 애플리케이션에서 "hello world"를 출력해보겠습니다.
+
+<Tabs>
+  <TabItem value="index.js" label="index.js">
+    ```js
+    // 1. Import dependencies
+    import React from "react";
+    import { createRoot } from "react-dom/client";
+
+    // 2. Create a React element
+    const element = React.createElement("p", {id: 'hello'}, 'Hello World!');
+
+    // 3. Render the application
+    const container = document.querySelector("#root");
+    const root = createRoot(container);
+    root.render(element);
+    ```
+
+  </TabItem>
+  <TabItem value="index.html" label="index.html">
+    ```html
+    <html>
+      <body>
+        <div id="root"></div>
+      </body>
+    </html>
+    ```
+  </TabItem>
+</Tabs>
+
+두개의 파일을 만들었습니다. `index.html` 파일은 기본적인 HTML 문서이고, `index.js` 파일은 최소한의 리액트 애플리케이션을 구동하기 위한 코드를 가지고 있습니다.
+
+위 코드를 실행시키면, "Hello World"라는 텍스트를 가지고 있는 P 요소가 화면에 출력됩니다.
+
+이 부분에 알아봐야 할것들이 많습니다. 하나의 섹션에 하니씩 알아볼 예정입니다. 할 수있다면, 위 예시를 연구해보시는걸 추천드립니다.
+
+## 🌃 1. 의존성 임포트하기
+
+```js
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+```
+
+파일 최상단에는 자바스크립트의 모듈 시스템을 사용한 두개의 임포트 구문이 있습니다.
+`react` 의존성으로 부터 코어 React 라이브러리를 임포트했고, `react-dom` 에서 `createRoot` 함수를 임포트 했습니다.
+
+왜 두개의 분리된 패키지가 있는지 의아할 수 있는데, 이는 React 자체가 플랫폼에 독립적이기 때문입니다. 핵심 `react`가 있고, 플랫폼에 특화된 서로다른 render 들이 있습니다.
+
+- `react-dom`은 웹을 위한 render 입니다.
+- `react-native`는 모바일(iOS/Android)이나 데스크탑(Windows/macOS) 애플리케이션을 위한 render 입니다.
+- `react-three-fiber`는 WebGL을 사용한 3D 장면이나 Three.js를 위한 render 입니다.
+
+모든 플랫폼들은 UI를 만드는데 사용되는 고유한 내장 요소가 있습니다. 웹에서는 `<div>`, `<p>`, `<button>` 과 같은 HTML 요소를 사용하지만, React Native의 경우 해당 요소들이 없습니다.
+대신 `Text`, `View`, `Pressable`이 있습니다. react-three-fiber의 경우 lights, geometries, materials과 camera와 같은 기본 요소들이 있습니다.
+
+모든 플랫폼들은 `react` 패키지에 있는 코어 React 프레임워크를 사용합니다. 하지만 모든 비즈니스 로직을 사용자 인터페이스로 실제로 구현하려면 플랫폼에 맞는 바인딩이 필요합니다.
+
+React를 배우면서 쌓은 기술을 모바일 애플리케이션이나 3D 인터페이스를 만드는데 사용할 수 있기 때문에 대단한 일입니다.
+
+:::info "DOM"이 무엇일까요?
+DOM은 웹사이트나 웹 애플리케션을 구성하고 있는 구조 입니다. 웹사이트를 방문하게 되면, 브라우저는 정적인 HTML을 DOM으로 변환합니다.
+
+비유를 해보자면, HTML은 특정 자동차의 설계도이고 DOM은 자동차 그 자체입니다.
+
+이를 다른 관점에서 보면 다음과 같습니다.
+
+- 오른쪽 버튼을 클릭해 "View source"를 선택하면, 어떤 구조로 이루어져 있는지를 설명하는 정적인 문서인 HTML을 볼 수 있습니다.
+- 오른쪽 버튼을 클릭해 "Inspect element"를 선택하여 Element 탭을 열면 DOM과 상호작용할 수 있습니다. Attribute를 수정할수 있고 UI가 업데이트 되는것을 볼 수 있습니다.
+
+React와 같은 도구를 사용하면, 자바스크립트를 통해 DOM과 상호작용 함으로써 동작합니다. 필요할때마다 DOM을 생성하고 업데이트하며 삭제합니다.
+
+혹시 궁금하실까봐 말씀드리자면, DOM은 Document Object Model의 약자입니다.
+:::
+
+## 🌃 2. React element 생성하기
+
+다음으로 우리의 작은 애플리케이션에서 살펴볼 코드는 다음과 같습니다.
+
+```js
+const element = React.createElement('p', { id: 'hello' }, 'Hello World!');
+```
+
+`React.createElement` 함수는 3개 이상의 인자를 받는 함수입니다.
+
+1. 생성할 요소의 타입
+2. 요소가 가질 프로퍼티
+3. 요소의 콘텐츠. 만약 요소가 비어있어야 한다면 해당 인자는 생략해도 됩니다.
+
+이 함수는 "React element"를 반환합니다. 리액트 element는 일반적인 자바스크립트 객체입니다. `console.log(element)`로 검사해보면, 아래와 같이 출력됩니다.
+
+```js
+{
+    type: "p",
+    key: null,
+    ref: null,
+    props: {
+        id: 'hello',
+        children: 'Hello World!',
+    },
+    _owner: null,
+    _store: { validated: false }
+}
+```
+
+이 자바스크립트 객체는 `hello`를 id로 `Hello World!` 텍스트를 가지고 있는 가상의 p 태그에 대한 설명입니다. 이 정보는 브라우저에서 볼 수 있는 실제 p 태그를 생성하는데 사용됩니다.
+
+이 코스 후반부에, `key`와 `ref`에 대하여 살펴볼 것 입니다. 마지막 두개의 프로퍼티, `__owner`와 `__store`는 리액트 내부에서 사용되는 것이기 때문에 무시해도 됩니다.
+
+:::info DOM 계층
+DOM은 트리로 구성되어 있습니다. 가계도처럼, 각각의 element들은 부모와 조상, 형제와 자식을 가질 수 있습니다.
+
+아래의 HTML을 예로들어 보겠습니다.
+
+```html
+<html>
+  <body>
+    <main>
+      <p>
+        <strong>Warning:</strong>
+        objects in mirror are closer than they appear.
+      </p>
+    </main>
+    <footer>© 2022 Acme Inc.</footer>
+  </body>
+</html>
+```
+
+`<main>` element는
+
+- `body`를 부모로 가집니다.
+- `<p>` element를 단일 자식으로 가집니다.
+- `footer`를 단일 형제로 가집니다.
+
+이 계층구조는 웹에 큰 부분을 차지합니다. CSS에서 선택자를 작성할 때, 이 개념을 사용합니다.
+
+```css
+p:first-child {
+  /*
+    Apply styles to the paragraph if it's the
+    first child within its parent container.
+  */
+}
+```
+
+리액트 또한 이 모델을 사용합니다. 앞서 살펴보았듯이 리액트 element는 "children"을 지정할 수 있습니다. 리액트는 DOM 요소의 계층구조와 동일하게 계층을 형성하기 때문에 사용하는 용어가 동일합니다.
+:::
+
+## 🌃 3. 애플리케이션 렌더링하기
+
+남은 코드를 살펴보겠습니다.
+
+```js
+const container = document.querySelector('#root');
+const root = createRoot(container);
+root.render(element);
+```
+
+`document.querySelector`는 이미 존재하는 DOM element를 참조하는데 유용한 함수 입니다. 이미 `document.getElementById` 함수에 익숙하다면, 이건 `document.querySelector`의 최신 버전입니다.
+
+이 경우 해당 함수는 정상적으로 동작하는데, `index.html` 파일이 아래의 element를 가지고 있기 때문입니다.
+
+```html
+<div id="root"></div>
+```
+
+이 element는 우리 애플리케이션의 컨테이너 입니다. 리액트 애플리케이션을 렌더링할 때, 새로운 DOM element를 생성하고 이 컨테이너에 붙입니다.
+
+`react-dom`의 `createRoot` 함수를 사용하여, 이 element가 애플리케이션의 루트가 되도록 설정합니다. 그리고 마지막으로 `root.render(element)` 함수를 사용하여 애플리케이션을 렌더링 합니다.
+
+`render` 함수를 리액트 element를 DOM 노드들로 변화하는 기계라고 생각하면 좋습니다. 이 경우, 리액트 element를 ID와 내부에 텍스트가 있는 p 태그로 설명할 수 있습니다. `render` 함수는 이 설명서를 아래의 DOM 구조로 변환합니다.
+
+```html
+<p id="hello">Hello World!</p>
+```
+
+DOM element가 생성되면, 지정된 루트에 추가하여 화면에 보여지게 됩니다. 본질적으로 이 코드는 HTML에 대한 자바스크립트 기반의 설명을 가져와 실제 DOM 노드를 생성하는데 사용됩니다.
+
+p 요소를 만드는데 다소 복잡한 방법이라고 생각될지 모르겠습니다만, 뒤에서 살펴볼 내용에서 진짜 마법은 element가 변경될 때 일어납니다.
