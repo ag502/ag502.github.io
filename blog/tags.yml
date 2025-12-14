@@ -3,17 +3,42 @@ facebook:
   permalink: /facebook
   description: Facebook tag description
 
-hello:
-  label: Hello
-  permalink: /hello
-  description: Hello tag description
-
 docusaurus:
   label: Docusaurus
   permalink: /docusaurus
   description: Docusaurus tag description
 
-hola:
-  label: Hola
-  permalink: /hola
-  description: Hola tag description
+css:
+  label: CSS
+  permalink: /css
+  description: CSS tag description
+
+animation:
+  label: Animation
+  permalink: /animation
+  description: Animation tag description
+
+react:
+  label: React
+  permalink: /react
+  description: React tag description
+
+vue:
+  label: Vue
+  permalink: /vue
+  description: Vue tag description
+
+javascript:
+  label: JavaScript
+  permalink: /javascript
+  description: JavaScript tag description
+
+typescript:
+  label: TypeScript
+  permalink: /typescript
+  description: TypeScript tag description
+
+designPatterns:
+  label: Design Patterns
+  permalink: /design-patterns
+  description: Design Patterns tag description
