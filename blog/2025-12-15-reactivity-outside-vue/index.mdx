@@ -54,6 +54,92 @@ EffectScope {
 
 위 결과는 Vue 컴포넌트에서 봤던것과 동일하지만 완벽하게 독립적입니다.
 
+## 🌃 Vue 밖에서 effect scope 만들기
+
+위 에서 살펴보았듯이 순수 자바스크립트에서 effect scope을 생성하고 수동으로 관리할 수 있습니다. 이를 통해 반응형 effect가 추적되고 clean up 되는것을 제어할 수 있습니다.
+
+### 🎆 Effect Scope이 없을 때의 문제점
+
+적절한 scope 관리가 없다면 반응형 effect는 계속 실행됩니다.
+
+```js
+import { ref, watch } from '@vue/reactivity';
+
+async function runDemo() {
+  const n = ref(0);
+
+  watch(n, (v) => {
+    console.log(v);
+
+    if (v === 5) {
+      // watcher 실행 정지
+    }
+  });
+
+  setInterval(() => {
+    n.value = n.value + 1;
+  }, 200);
+}
+```
+
+위 코드에서 watcher는 실행을 멈추지 않습니다. Interval 함수가 값을 계속 증가시킵니다.
+
+### 🎆 해결책
+
+```js
+import { ref, watch, effectScope } from '@vue/reactivity';
+
+async function runDemo() {
+  const scope = effectScope();
+
+  scope.run(() => {
+    const n = ref(0);
+
+    watch(n, (v) => {
+      console.log(v);
+
+      if (v === 5) {
+        scope.stop();
+      }
+    });
+
+    setInterval(() => {
+      n.value = n.value + 1;
+    }, 200);
+  });
+}
+```
+
+위 코드는 반응형 코드를 effect scope으로 감싸고, 조건을 충족할 때 반응형이 실행되지 않도록 합니다.
+
+### 🎆 Scope이 실행을 제어하는 방식
+
+`effectScope` 함수는 effect를 추적하고 clean up 하는 scope을 생성합니다.
+
+```js
+const scope = effectScope();
+```
+
+`scope.run` 함수는 effect scope 컨텍스트 내부의 코드를 실행시킵니다.
+
+```js
+scope.run(() => {
+  // scope 내부의 반응형 effect들은 scope에 의해 추적됩니다.
+  const n = ref(0);
+  watch(n, (v) => {
+    console.log(v);
+  });
+});
+```
+
+`scope.stop` 함수는 추적중인 모든 effect들을 중단시킵니다.
+
+```js
+if (v === 5) {
+  scope.stop();
+}
+```
+
 ## 🌃 Vue 밖에서 반응형 시스템을 사용하는 이유
 
 Vue 밖에서 반응형 시스템을 사용하면 많은 가능성이 열립니다.
