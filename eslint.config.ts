@@ -145,6 +145,7 @@ const mdxConfig = [
       'prefer-const': 'error',
       'react/prop-types': 'off',
       'react/jsx-no-undef': 'off',
+      'react-hooks/rules-of-hooks': 'off',
     },
   },
 ] as FlatConfig.ConfigArray;

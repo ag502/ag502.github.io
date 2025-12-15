@@ -1,0 +1,161 @@
+---
+slug: why-composables-need-to-be-top-level
+title: composable이 Top Level에 있어야 하는 이유
+tags: [vue]
+unlisted: true
+---
+
+이 문서는 색인되지 않습니다.
+{/* truncate */}
+
+아마 composable이 top level에 있어야 하는 이유를 들어본적이 있을겁니다. 근데 왜 이런 규칙이 중요할까요?
+
+Composable을 비동기 함수나 이벤트 핸들러 내부에서 선언한다면 메모리 누수가 발생할 수 있습니다. 이는 추적하기가 까다롭습니다.
+
+## 🌃 메모리 누수 문제
+
+Top-level 규칙을 따르지 않았을 때 어떤일이 발생하는지 살펴보겠습니다.
+
+```js
+import { effectScope, ref, watch } from '@vue/reactivity';
+
+const WAIT_TIME = 1000;
+
+function useInterval(label) {
+  const n = ref(0);
+
+  watch(n, (v) => console.log(label, v));
+  setInterval(() => n.value++, WAIT_TIME);
+}
+
+async function runDemo() {
+  const outerScope = effectScope();
+
+  outerScope.run(() => {
+    function handleUserInput() {
+      // 비동기 호출 - outerScope의 일부분이 아님
+      useInterval('handleUserInput');
+    }
+
+    // setTimeout은 비동기 이벤트 핸들러의 호출을 대신합니다.
+    setTimeout(handleUserInput, 0);
+  });
+
+  console.log('Starting task...');
+  console.log('Try to stop the effect scope after 3 seconds...');
+
+  // 3초 후에 scope을 중단시킵니다
+  await wait(3000);
+
+  console.log('Stopping outerScope...');
+  outerScope.stop();
+  console.log('But the task keeps running! This is a leak.');
+
+  await wait(3000);
+}
+```
+
+위 코드를 실행시키면 아래와 같은 결과가 출력됩니다.
+
+```
+Starting task...
+Try to stop the effect scope after 3 seconds...
+task-A 1
+task-A 2
+task-A 3
+Stopping outerScope...
+But the task keeps running! This is a leak.
+task-A 4
+task-A 5
+task-A 6
+```
+
+Composable은 effect scope을 정지했음에도 계속 실행됩니다. 이는 `handleUserInput` 함수가 비동기적으로 호출되기 때문입니다. 비동기적으로 호출될때 composable은 `outerScope`의 내부에서 호출되지 않습니다.
+
+`outerScope`를 콘솔에 출력하면 아래처럼 추적하고 있는 반응형 effect가 없습니다.
+
+```
+EffectScope {
+  detached: false,
+  _active: true,
+  _on: 0,
+  effects: [],
+  cleanups: [],
+  _isPaused: false,
+  parent: undefined
+}
+```
+
+## 🌃 해결책: Detached Effect Scope
+
+메모리 누수를 해결하기 위해서는 composable을 위한 detached effect scope을 생성해야 합니다.
+
+```js
+import { effectScope, ref, watch } from '@vue/reactivity';
+
+const WAIT_TIME = 1000;
+
+function useInterval(label) {
+  const n = ref(0);
+
+  watch(n, (v) => console.log(label, v));
+  setInterval(() => n.value++, WAIT_TIME);
+}
+
+async function runDemo() {
+  const outerScope = effectScope();
+
+  outerScope.run(() => {
+    function handleUserInput() {
+      // composable을 위한 detached effect scope을 생성합니다.
+      const innerScope = effectScope(true);
+
+      innerScope.run(() => useInterval('task-A'));
+
+      setTimeout(() => {
+        console.log('Stopping innerScope...');
+        innerScope.stop();
+        console.log('Task stopped successfully! No leaks.');
+      }, WAIT_TIME * 3);
+    }
+
+    setTimeout(handleUserInput, 0);
+  });
+
+  console.log('Starting task...');
+  console.log('Task will run for 3 seconds then stop cleanly...');
+
+  await wait(5000);
+  console.log('Stopping outerScope (parent scope)...');
+  outerScope.stop();
+}
+```
+
+이제 위 코드를 실행시키면 아래와 같은 결과가 출력됩니다.
+
+```
+Starting task...
+Task will run for 3 seconds then stop cleanly...
+task-A 1
+task-A 2
+Stopping innerScope...
+Task stopped successfully! No leaks.
+Stopping outerScope (parent scope)...
+```
+
+위 코드에서 핵심은 `effectScope(true)`를 호출하여 detached scope을 생성한 것입니다. 이 scope은 부모와 독립적으로 존재합니다.
+
+## 🌃 Detached Effect Scope이 중요한 이유
+
+Vue 컴포넌트에서 이 문제는 composable을 아래의 함수 내부에서 호출할 때 발생합니다.
+
+- 이벤트 핸들러
+- Promise 콜백
+- setTimeout 콜백
+- 비동기 코드
+
+컴포넌트의 effect scope은 동기적으로 실행되는 setup 함수의 바깥에서 생성된 composable을 clean up 할 수 없습니다.
+
+Detached scope을 생성함으로써, effect가 clean up 될 때 미세하게 제어할 수 있습니다. 이렇게 하면 메모리 누수를 방지할 수 있고 장시간 실행되는 작업을 중지할 수 있습니다.
+
+`true` 인자는 detached scope을 생성합니다. 이는 부모 scope이 중지될 때 자동으로 clean up 되지 않습니다.
