@@ -1,0 +1,182 @@
+---
+slug: cleaning-up-effects-with-on-scope-dispose
+title: onScopeDispose로 clean up 하기
+tags: [vue]
+unlisted: true
+---
+
+이 문서는 색인되지 않습니다.
+{/* truncate */}
+
+`stop()` 함수를 effect scope에서 호출하면, Vue는 자동으로 watcher와 computed 값과 같은 반응형 effect들이 clean up 됩니다.
+하지만 반응형이 아닌 자바스크립트의 effect는 어떻게 될까요?
+
+비 반응형의 자바스크립트 effect는 `onScopeDispose` 함수를 통해 clean up 해야 합니다.
+
+## 🌃 자바스크립트 clean up 문제
+
+아래 코드는 반응형과 비 반응형의 effect를 생성하는 composable입니다.
+
+```js
+import { effectScope, ref, watch } from '@vue/reactivity';
+
+function useInterval(label) {
+  const n = ref(0);
+  watch(n, (v) => console.log(label, v));
+
+  // 자바스크립트 타이머는 자동으로 clean up 되지 않습니다.
+  setInterval(() => {
+    n.value++;
+    console.log('🔄 Interval is still running!');
+  }, 1000);
+}
+
+async function runDemo() {
+  const outerScope = effectScope();
+
+  outerScope.run(() => {
+    function handleUserInput() {
+      const innerScope = effectScope(true);
+
+      innerScope.run(() => userInterval('task-A'));
+
+      setTimeout(() => {
+        console.log('Stopping innerScope...');
+        innerScope.stop();
+        console.log('Task stopped, but the interval is still running!');
+      }, 3000);
+    }
+
+    setTimeout(handleUserInput, 0);
+  });
+
+  console.log('Starting task...');
+  console.log(
+    'Task will run for 3 seconds then stop (but interval still leaks)...',
+  );
+
+  await wait(5000);
+}
+```
+
+위 코드를 실행하면 아래와 같은 결과가 출력됩니다.
+
+```
+Starting task...
+Task will run for 3 seconds then stop (but interval still leaks)...
+task-A 1
+🔄 Interval is still running!
+task-A 2
+🔄 Interval is still running!
+Stopping innerScope...
+Task stopped, but the interval is still running!
+🔄 Interval is still running!
+🔄 Interval is still running!
+```
+
+watcher는 멈췄지만 자바스크립트의 `setInterval`은 계속 실행됩니다. 이는 메모리 누수를 발생시킵니다.
+
+## 🌃 해결책: onScopeDispose
+
+이 문제를 `onScopeDispose` 함수를 사용해 해결할 수 있습니다.
+
+```js
+import { effectScope, ref, watch, onScopeDispose } from '@vue/reactivity';
+
+function useInterval(label) {
+  const n = ref(0);
+  watch(n, (v) => console.log(label, v));
+
+  const id = setInterval(() => {
+    n.value++;
+    console.log('🔄 Interval is still running!');
+  }, 1000);
+
+  onScopeDispose(() => {
+    clearInterval(id);
+    console.log(`🧹 Interval cleaned up for ${label}`);
+  });
+}
+
+async function runDemo() {
+  const outerScope = effectScope();
+
+  outerScope.run(() => {
+    function handleUserInput() {
+      const innerScope = effectScope(true);
+      innerScope.run(() => useInterval('task-A'));
+
+      setTimeout(() => {
+        console.log('Stopping innerScope...');
+        innerScope.stop();
+        console.log('Task stopped successfully! No leaks.');
+      }, 3000);
+    }
+
+    setTimeout(handleUserInput, 0);
+  });
+
+  console.log('Starting task...');
+  console.log('Task will run for 3 seconds then stop cleanly...');
+
+  await wait(5000);
+  console.log('Stopping requestScope (parent scope)...');
+  outerScope.stop();
+}
+```
+
+위 코드를 실행시키면 원하는 결과가 출력됩니다.
+
+```
+Starting task...
+Task will run for 3 seconds then stop cleanly...
+task-A 1
+🔄 Interval is still running!
+task-A 2
+🔄 Interval is still running!
+Stopping innerScope...
+🧹 Interval cleaned up for task-A
+Task stopped successfully! No leaks.
+Stopping requestScope (parent scope)...
+```
+
+Scope이 정지될 때 interval이 정상적으로 clean up 됩니다.
+
+## 🌃 onScopeDispose가 동작하는 방식
+
+`onScopeDispose` 함수는 현재 effect scope에 clean up 함수 콜백을 등록합니다. `scope.stop()`을 호출하면, Vue는 자동으로 등록된 모든 clean up 함수를 실행시킵니다.
+
+이 패턴은 정리해야하는 모든 자바스크립트 리소스에 사용할 수 있습니다.
+
+```js
+function useWebSocket(url) {
+  const socket = new WebSocket(url);
+
+  onScopeDispose(() => {
+    socket.close();
+  });
+
+  return socket;
+}
+
+function useEventListeners(element, event, handler) {
+  element.addEventListener(event, handler);
+
+  onScopeDispose(() => {
+    element.removeEventListener(event, handler);
+  });
+}
+
+function useFileWatcher(path) {
+  const watcher = fs.watch(path, callback);
+
+  // Clean up the file watcher
+  onScopeDispose(() => {
+    watcher.close();
+  });
+
+  return watcher;
+}
+```
+
+핵심은 clean up 해야하는 ID나 참조값을 저장한 후, `onScopeDispose` 함수에 전달해야 한다는 것입니다.
