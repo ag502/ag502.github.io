@@ -1,0 +1,341 @@
+---
+slug: understanding-jsx
+title: JSX 이해하기
+tags: [react]
+unlisted: true
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+이 문서는 색인되지 않습니다.
+
+{/* truncate */}
+
+저번 글에서, 자바스크립트 객체를 사용하여 리액트 element가 어떻게 만들어지는지를 살펴봤습니다.
+
+사실, 대부분의 개발자들은 element를 객체를 이용해 만들지 않습니다. JSX라 불리는 특별한 구분을 사용하는것이 더 일반적입니다.
+
+아래는 앞서 살펴보았던 예제와 동일하지만, 자바스크립트 대신 JSX를 사용한 예제입니다.
+
+```jsx
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+
+const element = <p id="hello">Hello World!</p>;
+
+const container = document.querySelector('#root');
+const root = createRoot(container);
+root.render(element);
+```
+
+`React.createElement`를 사용하는것 대신에 React element를 생성하기 위해 HTML와 비슷한 구문을 사용했습니다.
+
+왜 JSX를 사용할까요? 이런 작은 규모의 예시에서는 명확하게 드러나지 않을 수 있습니다만 마크업이 커지면 JSX가 읽기 쉽다는것이 분명해집니다.
+
+React element도 HTML element와 마찬가지로 트리 구조를 형성할 수 있다는걸 기억하세요? React element의 "children" 프로퍼티에 다른 React element를 할당하면 트리구조가 형성됩니다.
+
+실제로 React 코드에는 상당히 중요한 트리 구조가 포함되는 경우가 많습니다. 아래는 자바스크립트 객체를 이용한 예입니다.
+
+```js
+const element = React.createElement(
+  'nav',
+  { id: 'main-nav' },
+  React.createElement(
+    'ul',
+    null,
+    React.createElement(
+      'li',
+      null,
+      React.createElement('a', { href: '/' }, 'Home'),
+    ),
+    React.createElement(
+      'li',
+      null,
+      React.createElement('a', { href: '/archives' }, 'Archives'),
+    ),
+  ),
+);
+```
+
+꽤 읽기 어렵습니다. 아래는 JSX를 사용한 동일한 예시입니다.
+
+```jsx
+const element = (
+  <nav id="main-nav">
+    <ul>
+      <li>
+        <a href="/">Home</a>
+      </li>
+      <li>
+        <a href="/archives">Archives</a>
+      </li>
+    </ul>
+  </nav>
+);
+```
+
+이유가 무엇이든지, HTML과 비슷한 구문이 이해하기 훨씬 쉽습니다. 읽기도 쉽고, 쓰기도 쉽습니다.
+
+## 🌃 JSX를 자바스크립트로 컴파일하기
+
+만약 JSX 코드를 브라우저에서 실행시킨다면 오류가 발생할 것입니다. 자바스크립트 엔진은 JSX를 이해하지 못하고 자바스크립트만 이해할 수 있습니다. 따라서 코드를 자바스크립트 평문 코드로 "컴파일"할 필요가 있습니다.
+
+이는 바벨과 같은 도구를 사용하여 빌드 단계에서 대부분 완료됩니다. 이 내용에 대해서는 나중에 살펴보겠습니다.
+
+지금은 우리가 작성하는 JSX 코드가 `React.createElement`로 변환되어야 한다는 사실을 이해하는게 중요합니다. 코드가 사용자의 브라우저에서 실행되는 시점에 모든 JSX 코드는 사라지고, 중첩된 `React.createElement` 호출만 가득한 JS 파일만 남습니다.
+
+:::info "transpiled" vs "compiled"
+JSX를 브라우저 친화적인 자바스크립트로 변환하는 과정을 "compiling"이 아닌 "transpiling"이라고 부르기도 합니다. 두 용어는 동의어일까요? 아니면 무언가 다른걸까요?
+
+둘은 다릅니다만 개인적으로 둘의 차이점은 크게 중요하지 않다고 생각합니다. 두 용어를 동의어로 처리해도 무방할듯합니다.
+
+컴퓨터 과학에서 "compiling"은 보통 인간이 읽을 수 있는 코드를 기계가 이해할 수 있는 코드로 변환하는 것을 의미합니다.
+
+예를 들어, 컴파일러는 파이썬과 같은 고수준의 언어를 기계가 이해할 수 있는 저수준 언어로 변경합니다.
+
+반면 "transpiling"은 보통 하나의 고수준 언어를 다른 고수준의 언어로 변경하는것을 의미합니다. 예를 들어, 자바스크립트를 파이썬으로 "transpile" 할 수 있습니다.
+
+따라서 엄격하게 용어를 적용해본다면, JSX -> JS 변환은 어떤 용어로 불려야 할까요?
+
+글쎄요, 정하기가 어렵습니다. 브라우저는 JSX를 이해할 수 없습니다. 그러나 자바스크립트는 이해합니다. 그리고 JSX를 처리할 때는 기계에 더 친숙하게 처리합니다. 즉 사람이 읽기 어려워지고 기계는 읽기 쉬운 코드로 변환합니다.
+
+반면에, 대부분의 리액트 개발자들은 변환된 자바스크립트 코드를 이해할 수 있습니다. 읽기 다소 어렵긴하지만, 아예 읽고 이해할 수 없을 정도는 아닙니다. 파이썬 개발자들이 기계어로 코드를 컴파일 할 때, 결과물로 나온 코드는 아예 이해할 수 없습니다.
+
+위와 같은 이유로, 저는 "compile" 이라는 용어를 좀 더 선호합니다. 대부분은 "JSX를 자바스크립트로 컴파일 한다"의 의미를 이해할 것이고 그것이 가장 중요한 것입니다.
+:::
+
+:::warning 파일 확장자와 JSX
+지금까지 살펴본 예제에서, 파일의 이름은 `index.js` 였습니다. 대부분의 사람들이 순수한 자바스크립트 파일이 아니기 때문에 파일이름을 `index.jsx`로 변경해야 하는게 아닌지 의문을 품습니다.
+
+초창기 리액트에서는 JSX를 포함하는 파일은 반드시 `.jsx` 확장자를 명시해 줘야 했습니다. 이는 컴파일러에게 이 파일이 JSX 구문을 포함하고 있으니 자바스크립트 코드로 변경해야 한다고 알려주는 역할을 합니다.
+
+이는 꽤 귀찮은 일입니다. 개발과정에서 신경써야 할 것이 하나 더 생기기 때문입니다. JSX를 추가하거나 제거할때마다 파일이름을 변경하는것은 너무 번거롭습니다.
+
+그래서 이 규칙들은 느슨해졌습니다. 최근에는 `.js` 파일에서도 JSX 구문을 사용해도 문제없이 작동합니다. 컴파일러가 `.js` 파일은 JSX를 포함하고 있다고 가정합니다.
+:::
+
+## 🌃 React 임포트 구문 생략하기
+
+아래의 코드를 살펴보겠습니다.
+
+```jsx
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+
+const element = <p id="hello">Hello World!</p>;
+
+const container = document.querySelector('#root');
+const root = createRoot(container);
+root.render(element);
+```
+
+첫줄에 `React`를 임포트 했습니다만, 실제로 사용하는 곳이 없습니다. 생략해도 되는걸까요?
+
+사실 React 임포트를 사용하고 있습니다. 어떤 일이 일어나는지 살펴봅시다.
+
+JSX 코드를 컴파일하면, 아래의 코드를 결과로 얻습니다.
+
+```js
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+
+const element = React.createElement('p', { id: 'hello' }, 'Hello World!');
+
+const container = document.querySelector('#root');
+const root = createRoot(container);
+root.render(element);
+```
+
+JSX가 자바스크립트 코드로 변환되면, 의존성이 명확해집니다. `<p>` 태그는 `React.createElement` 함수 호출로 변환 됩니다.
+
+초기 리액트 버전에서는, React 임포트 구문을 생략한다면 아래와 같은 오류가 발생했습니다.
+
+:::danger 오류
+Error: React is not defined
+:::
+
+만약 `<p>`가 `React.createElement('p')`로 변환된다는것을 모르면, 위 오류메세지가 무엇을 의미하는지 어떻게 해결해야할지 모를것 입니다.
+
+React 17버전 부터, 리액트팀은 바벨과 다른 컴파일러를 사용하여 새로운 "JSX transformer"를 도입했습니다. 빌드단계에서 임포트구문이 자동으로 주입됩니다.
+
+아래의 코드를 예로 들어보겠습니다.
+
+```jsx
+const element = <p id="hello">Hello World!</p>;
+```
+
+최신 JSX transformer를 사용하면 아래와 같이 컴파일 됩니다.
+
+```js
+import { jsx as _jsx } from 'react/jsx-runtime';
+
+const element = _jsx('p', { id: 'hello' }, 'Hello World!');
+```
+
+원본코드에서 어떠한 임포트 구문도 포함되지 않았다는것을 주목하세요. 컴파일러에의해 자동으로 포함됩니다.
+
+`_jsx`는 `React.createElement`를 최적화한 것입니다. Fragments나 Portals을 사용할 때 더 빠르게 동작하는 기능이 포함되어 있습니다. 즉, `React.createElement`와 정확히 동일하게 동작합니다.
+
+따라서 요즘에는 React를 직접 임포트할 필요가 없습니다. JSX 컴파일러가 이를 대신 해결해 줍니다.
+
+## 🌃 표현식 슬롯
+
+JSX에서 태그 사이에 추가한 컨텐츠는 정적인 문자로 취급됩니다. 만약 변수를 참조하려고 한다면, 참조의 값이 아니라 변수의 이름이 출력됩니다.
+
+```jsx
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+
+const shoppingList = ['apple', 'banana', 'cherry'];
+
+const element = <div>Item left to purchase: shoppingList.length</div>;
+```
+
+위와 같이 `shoppingList.length`라는 변수를 참조하려고 한다면, 3이라는 값이 아니라 `shoppingList.length`라는 문자열이 출력됩니다. JSX코드가 컴파일될 때 아래와 같이 변환되기 때문입니다.
+
+```js
+const element = React.createElement(
+  'div',
+  {},
+  'Item left to purchase: shoppingList.length',
+);
+```
+
+중괄호를 사용해서 표현식 슬롯을 만들수 있고, 그 사이에 위치한 것들은 문자열이 아닌 순수한 자바스크립트로 취급됩니다. 중괄호는 컴파일될 때 또다른 자식으로 변환되기 때문입니다.
+
+```jsx
+const element = <div>Item left to purchase: {shoppingList.length}</div>;
+```
+
+```js
+const element = React.createElement(
+  'div',
+  {},
+  'Item left to purchase: ',
+  shoppingList.length,
+);
+```
+
+JSX가 `React.createElement` 함수 호출로 변환이 되고 중괄호 사이에 위치한 것들은 함수의 인자이기 때문에, 문(statement)를 넣으면 오류가 발생합니다. 중괄호 사이에는 반드시 표현식이 들어가야 합니다.
+
+### 🎆 JSX에서의 주석
+
+JSX에서 주석을 추가할때도, 표현식 슬롯을 사용합니다.
+
+```jsx
+const element = <div>{/* Some comment! */}</div>;
+```
+
+한줄 주석(//)을 사용하지 않고 여러줄 주석(/\* \*/)을 사용해야 합니다. 한줄 주석은 `}` 괄호를 포함해서 모든 것을 주석 처리하기 때문입니다.
+
+```
+const element = (
+  <div>
+    {// Some comment!}
+  </div>
+)
+```
+
+### 🎆 속성 표현식 슬롯
+
+동적인 속성 값에도 동일하게 적용할 수 있습니다.
+
+```jsx
+const uniqueId = 'content-wrapper';
+
+const element = <main id={uniqueId}>Hello World</main>;
+```
+
+위에서 보았듯이 중괄호로 표현식 슬롯을 만들 수 있습니다. 이제, `id` 속성을 위한 슬롯을 만들어 보겠습니다.
+
+아래는 컴파일 되는 방식입니다.
+
+```js
+const element = React.createElement(
+  'main',
+  {
+    id: uniqueId,
+  },
+  'Hello World',
+);
+```
+
+비교를 위해 표현식 슬롯이 없고 id값이 고정된 경우는 아래와 같이 컴파일 됩니다.
+
+```js
+const element = <main id="content-wrapper">Hello World</main>;
+
+const compiledElement = React.createElement(
+  'main',
+  { id: 'content-wrapper' },
+  'Hello World',
+);
+```
+
+속성값을 동적으로 설정하고 싶을 때 표현식 슬롯을 사용할 수 있습니다. 단순 값 뿐만 아니라 유효한 자바스크립트 표현식을 넣을 수 있습니다.
+
+```js
+const userEmail = 'sumeet@thegreat.com';
+
+const element = <main id={userEmail.replace('@', '-')}>Hello World</main>;
+
+const compiledElement = React.createElement(
+  'main',
+  {
+    id: userEmail.replace('@', '-'),
+  },
+  'Hello World',
+);
+```
+
+컴파일될 때, 코드가 평가되지 않는다는 점을 명심하세요. 위 코드에서 `useEmail` 문자열에서 `@`을 `-`로 변경하여 `sumeet-thegreat.com` 문자열을 생성하는 로직을 작성했지만 코드가 실행될 때 동작합니다.
+
+JSX가 자바스크립트로 컴파일될 때, 중괄호 사이에 있는 모든것은 그대로 복사가 됩니다. 어떠한 함수도 호출되거나 실행되지 않습니다. 함수의 호출은 오직 브라우저에서 자바스크립트가 실행될 때 이루어집니다.
+
+이는 컴파일 타임(코드가 브라우저에서 실행되기전 발생하는 코드 처리)과 런타임(코드가 브라우저에서 실행되는 시점)의 차이점입니다.
+
+#### 🎇 타입 강제
+
+런타임에서, 리액트는 표현식 슬롯에 속성을 제공할 때 필요에 따라 타입을 자동으로 변환합니다.
+
+예를 들어, 아래의 두 element는 동일합니다.
+
+```jsx
+<input required="true" />
+```
+
+```jsx
+<input required={true} />
+```
+
+첫번째 예시에서는, `required` 속성에 `"true"` 문자열을 할당하고 있습니다. 두 번째 예시에서는 boolean 타입인 `true`를 할당했습니다. HTML에서 값은 반드시 문자열이여야 합니다. 따라서 `true`는 `"true"`로 변환됩니다.
+
+비슷하게, 숫자나 문자를 숫자 타입 속성에 할당할 수 있습니다.
+
+```jsx
+<input type="range" min="1" max="20" />
+```
+
+```jsx
+<input type="range" min={1} max={20} />
+```
+
+:::info Boolean 속성
+HTML에서 속성키 만을 사용하여 값을 `true`로 설정할 수 있습니다.
+
+```html
+<input required />
+```
+
+이 패턴은 JSX에서도 동일합니다. 아래의 두 예시는 동일합니다.
+
+```jsx
+<input required />
+```
+
+```jsx
+<input required={true} />
+```
+
+:::
