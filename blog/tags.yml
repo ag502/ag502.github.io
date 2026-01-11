@@ -28,6 +28,11 @@ vue:
   permalink: /vue
   description: Vue tag description
 
+vue-reactivity:
+  label: Vue Reactivity
+  permalink: /vue-reactivity
+  description: Vue Reactivity tag description
+
 javascript:
   label: JavaScript
   permalink: /javascript
