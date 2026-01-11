@@ -1,0 +1,256 @@
+---
+slug: creating-long-running-effect-scopes
+title: 수명이 긴 Effect Scope 만들기
+tags: [vue, vue-reactivity]
+unlisted: true
+---
+
+이 문서는 색인되지 않습니다.
+{/* truncate */}
+
+컴포넌트보다 오래 유지되는 effect scope를 만들 수 있습니다. 이 scope는 컴포넌트 밖에서 유지됩니다.
+
+이 글에서는 `useStore` composable을 만들어 컴포넌트끼리 데이터를 공유하는 방법을 알아 보겠습니다.
+
+## 🌃 문제점
+
+Store composable의 단순한 구현부터 살펴보겠습니다.
+
+```js
+import { ref, watch, effectScope } from '@vue/reactivity';
+
+export function useStore() {
+  const count = ref(0);
+
+  watch(count, (v) => console.log('watch', v));
+
+  return { count };
+}
+```
+
+위 예시는 반응형 `count`와 `count`값이 변경될 때 로그가 출력되는 함수입니다. 하지만 이 store를 복수의 컴포넌트에서 사용한다면 어떻게 될까요?
+
+아래는 두개의 다른 컴포넌트에 사용했을 때의 데모입니다.
+
+```js
+function runDemo() {
+  let storeA, storeB;
+
+  const componentA = effectScope();
+  componentA.run(() => {
+    console.log('Component A: Getting store and setting count to 5');
+
+    storeA = useStore();
+    storeA.count.value = 5;
+
+    console.log(`Component A: count is ${storeA.count.value}`);
+  });
+
+  const componentB = effectScope();
+  componentB.run(() => {
+    console.log('Component B: Getting store (should be same as Component A)');
+
+    storeB = useStore();
+    console.log(`Component B: count is ${storeB.count.value}`);
+
+    console.log('Component B: Setting count to 10');
+    storeB.count.value = 10;
+  });
+
+  // Component A store는 Component B와 분리되어 있음
+  componentA.run(() => {
+    console.log(`Component A: count is ${storeA.count.value}`);
+  });
+}
+```
+
+Component A는 독자적인 effect scope를 생성하고 `useStore`를 호출합니다. 생성된 store는 count값을 5로 설정하고 값을 출력합니다.
+
+Component B도 비슷한 동작을 합니다. Component A가 생성한 store와 동일한 store가 생성되길 기대하면서 `useStore`를 호출합니다. 하지만 그렇지 않습니다.
+
+## 🌃 실제로 일어나는 일어나는 일
+
+위 코드를 실행하면, 각각의 컴포넌트는 분리된 store를 생성합니다.
+
+```
+Component A: Getting store and setting count to 5
+watch 5
+Component A: count is 5
+Component B: Getting store (should be same as Component A)
+Component B: count is 0
+Component B: Setting count to 10
+watch 10
+Component A: count is 5 (expected 10)
+```
+
+Component A는 count값을 5로 설정했고 watcher는 5를 출력했습니다.
+
+하지만 Component B가 store에 접근해 count를 출력하면 0이 출력됩니다. 기존의 동일한 값을 참조한게 아니라 새로운 data store를 생성했기 때문입니다.
+
+Component B는 count 값을 10으로 설정하면 watcher가 실행됩니다. 이는 두개의 store가 독립적임을 의미합니다.
+
+Component A의 count 값은 여전히 5 입니다.
+
+## 🌃 해결책
+
+컴포넌트가 동일한 값을 공유할 수 있도록 `useStore`를 수정해보겠습니다.
+
+cache 값을 함수 밖, 모듈 내부에 설정합니다.
+
+```js
+import { ref, watch, effectScope } from '@vue/reactivity';
+
+// 컴포넌트가 store를 공유할 수 있도록 cache
+let cached;
+
+export function useStore() {
+  if (!cached) {
+    const count = ref(0);
+    watch(count, (v) => console.log('watch', v));
+
+    cached = { count };
+  }
+
+  return cached;
+}
+```
+
+새로운 반응형 상태를 매번 생성하는게 아니라 캐시된 값이 있는지를 확인합니다. 만약 캐시된 값이 없다면 반응형 상태를 생성하고 이 값을 cache에 할당합니다.
+
+## 🌃 또다른 문제: Watcher 공유
+
+캐시된 상태 값이 두개의 컴포넌트에 공유되고 있지만, watcher도 컴포넌트끼리 공유되고 있습니다.
+하지만 effect scope 동작 방식 때문에 캐시된 컴포넌트가 없을 때, `useStore`를 호출하는 최초의 컴포넌트에 watcher가 연결됩니다.
+
+만약 최초의 컴포넌트가 unmount 되면 watcher도 함께 정리됩니다. 이는 store에 의존성이 있는 컴포넌트가 있더라도 발생합니다.
+
+```js
+function runDemo() {
+  // Component 1 lifecycle
+  console.log('=== Component 1 mounts ===');
+  const component1Scope = effectScope();
+  let store1;
+  component1Scope.run(() => {
+    store1 = useStore();
+    console.log('Component 1 gets store and creates watcher');
+    store1.count.value = 1;
+  });
+
+  // Component 2 lifecycle
+  console.log('\n=== Component 2 mounts ===');
+  const component2Scope = effectScope();
+  let store2;
+  component2Scope.run(() => {
+    store2 = useStore();
+    console.log('Component 2 gets same store (no new watcher created)');
+    store2.count.value = 2;
+  });
+
+  console.log('Both components share the same state:');
+  console.log('store1 === store2:', store1 === store2);
+
+  // Component 1 unmounts
+  console.log('\n=== Component 1 unmounts ===');
+  component1Scope.stop();
+  console.log('Component 1 scope stopped - watcher is destroyed');
+
+  // Component 2에서 store 값 업데이트
+  console.log('\n=== Component 2 tries to update count ===');
+  store2.count.value = 3;
+  console.log("Notice: No 'watch 3' log! The watcher is gone.");
+}
+```
+
+첫번째로, Component 1의 effect scope를 생성했습니다. 내부에서 `useStore`를 호출하고 값을 1로 설정했습니다.
+그 다음에 Component 2의 effect scope를 생성한 후 store를 가져와 해당 값을 2로 설정합니다.
+
+Store의 동일성을 확인하는 로그를 통해 두개의 store가 동일한것임을 증명할 수 있습니다.
+
+그런 다음 `component1Scope.stop()`를 호출함으로써 Component 1의 unmount를 재현했습니다.
+
+Component 2가 값을 업데이트 할 때 성공적으로 업데이트 되지만 watcher는 더 이상 실행되지 않습니다.
+
+## 🌃 실제로 일어나는 일
+
+위 코드를 실행하면 아래와 같은 결과가 출력됩니다.
+
+```
+Component 1 gets store and create watcher
+watch 1
+Component 2 gets same store (no new watcher created)
+watch 2
+Both components share the same state: true
+Component 1 unmounts
+Component 2 tries to update count
+Notice: No 'watch 3' log! The watcher is gone.
+```
+
+Component 1은 count를 1로 설정하고 이를 출력합니다. Component 2는 값을 2로 설정하고 이를 출력합니다.
+하지만 Component 1가 unmount 된 후에 Component 2의 count를 업데이트 하면 "watch 3"는 출력되지 않습니다. Component 1이 unmount될 때 watcher도 사라지기 때문입니다.
+
+## 🌃 해결책: createSharedComposable
+
+`useStore`를 `createSharedComposable` 함수를 사용해 구현해야 합니다. 이 구현은 VueUse의 `createSharedComposable`를 기반으로 합니다.
+
+```js
+function createSharedComposable(fn) {
+  let scope, cached;
+
+  return (...args) => {
+    if (!scope) {
+      // detached scope
+      scope = effectScope(true);
+
+      // detached scope내에서 composable 실행
+      cached = scope.run(() => fn(...args));
+    }
+
+    return cached;
+  };
+}
+```
+
+위 코드에서는 두가지를 캐싱합니다. 첫번째는 실제 store이고 두번째는 effect scope 입니다.
+
+Detached scope을 생성하기 위해 `effectScope(true)`를 호출합니다. 이 scope는 어떤 컴포넌트에도 종속되지 않습니다.
+
+그런다음 전달된 함수를 가져와 생성한 scope 내부에서 실행합니다. 나머지 연산자를 사용해 인수를 가져와 함수에 전달합니다.
+
+이 함수가 반환하는 값은 `scope.run()` 함수 호출이 반환한 값입니다. 이 값은 캐시된 값이 됩니다. 이 로직은 scope가 없는 경우에만 실행되도록 합니다.
+
+## 🌃 createSharedComposable 사용하기
+
+`useStore` 코드를 새롭게 고쳐보겠습니다.
+
+```js
+const useStore = createSharedComposable(() => {
+  const count = ref(0);
+  watch(count, (v) => console.log('watch', v));
+  return { count };
+});
+```
+
+이 함수가 실행될 때마다 캐시된 값이 반환됩니다.
+
+## 🌃 결과
+
+위 코드를 실행시키면 아래와 같은 결과가 나옵니다.
+
+```
+=== Component 1 mounts ===
+Component 1 gets store and creates detached watcher
+watch 1
+
+=== Component 2 mounts ===
+Component 2 gets same store (watcher in detached scope)
+watch 2
+
+Both components share the same state: true
+
+=== Component 1 unmounts ===
+Component 1 scope stopped - but watcher is in detached scope!
+
+=== Component 2 tries to update count ===
+watch 3
+Success! We see "watch 3" because watcher is detached.
+```
