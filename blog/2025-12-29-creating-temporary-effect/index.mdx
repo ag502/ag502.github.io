@@ -1,0 +1,157 @@
+---
+slug: creating-temporary-effect
+title: 임시 effect 만들기
+tags: [vue]
+unlisted: true
+---
+
+이 문서는 색인되지 않습니다.
+{/* truncate */}
+
+Effect scope은 컴포넌트 라이프사이클 전체에 유지될 필요가 없습니다. 동작이 끝나자마자 제거되는 임시 scope를 만들 수 있습니다.
+
+이 패턴은 반응형이 필요한 유틸리티 함수에 적용하기 적합합니다. 임시 scope는 리소스가 낭비되지 않습니다.
+
+## 🌃 리소스 낭비 문제를
+
+아래는 조건이 true가 되기를 기다리는 `waitFor` 유틸리티 함수의 예시입니다.
+
+```js
+import { ref, watch } from '@vue/reactivity';
+
+// Leaky version
+function waitFor(predicate, timeout = 5000) {
+  return new Promise((resolve, reject) => {
+    // 컴포넌트가 사라져도 유지됨
+    watch(
+      predicate,
+      (newValue) => {
+        if (newValue) {
+          resolve();
+        }
+      },
+      { immediate: true },
+    );
+
+    setTimeout(() => {
+      console.log('waitFor timed out');
+      reject(new Error('waitFor timed out'));
+    }, timeout);
+  });
+}
+
+async function runDemo() {
+  const ready = ref(false);
+
+  // ready가 2초후에 true로 변함
+  setTimeout(() => {
+    ready.value = true;
+    console.log('ready is now true!');
+  }, 2000);
+
+  console.log('Waiting for ready to become true...');
+  await waitFor(() => ready.value);
+
+  console.log('waitFor resolved, but watch and setTimeout survive!');
+  console.log('These effects will keep running until the process ends');
+}
+```
+
+위 코드는 올바르게 동작하지만, 리소스 낭비를 발생시킵니다.
+
+```
+Waiting for ready to become true...
+ready is now true!
+waitFor resolved, but watch and setTimeout survive!
+These effects will keep running until the process end
+waitFor timed out
+```
+
+Watcher와 timeout은 `waitFor` 함수가 동작을 마쳤을지라도 계속 실행됩니다. 컴포넌트에 이 상황을 대입해보면, 컴포넌트가 unmount될 때까지 계속 유지됩니다.
+
+## 🌃 해결책: 임시 effect scope 사용하기
+
+이 문제를 임시 effect scope을 사용해 해결할 수 있습니다.
+
+```js
+import { effectScope, ref, watch, onScopeDispose } from '@vue/reactivity';
+
+function waitFor(predicate, timeout = 5000) {
+  return new Promise((resolve, reject) => {
+    const scope = effectScope();
+
+    scope.run(() => {
+      watch(
+        predicate,
+        (newValue) => {
+          if (newValue) {
+            // 조건을 만족하면 scope 정지
+            scope.stop();
+            resolve();
+          }
+        },
+        { immediate: true },
+      );
+
+      const id = setTimeout(() => {
+        // 타임아웃 시간이 지나면 scope 정지
+        console.log('waitFor timed out');
+        scope.stop();
+        reject(new Error('waitFor timed out'));
+      }, timeout);
+
+      // scope이 정지될 때 timer clear
+      onScopeDispose(() => clearTimeout(id));
+    });
+  });
+}
+
+async function runDemo() {
+  const ready = ref(false);
+
+  // ready가 2초후에 true로 변함
+  setTimeout(() => {
+    ready.value = true;
+    console.log('ready is now true!');
+  }, 2000);
+
+  console.log('Waiting for ready to become true...');
+  await waitFor(() => ready.value);
+
+  console.log('waitFor resolved - all resources cleaned automatically');
+  console.log('No memory leaks - watch and timer are both stopped');
+}
+```
+
+위 코드를 실행시키면 원하는 결과가 출력됩니다.
+
+```
+Waiting for ready to become true...
+ready is now true!
+waitFor resolved - all resources cleaned automatically
+No memory leaks - watch and timer are both stopped
+```
+
+이 임시 effect scope는 `waitFor` 함수가 resolve되면 watcher와 timer를 중지시킵니다.
+
+## 🌃 임시 effect scope이 동작하는 방식
+
+이 패턴은 아래의 간단한 라이프사이클을 따릅니다.
+
+1. `effectScope` 으로 임시 scope가 생성됨
+2. 모든 effect들이 `scope.run` 함수 내에서 실행됨
+3. 모든 작업이 끝나면 `scope.stop` 함수를 실행해 scope 정지
+4. `onScopeDispose`를 통해 clean up 이 자동으로 실행됨
+
+`effectScope`에 `true`를 인자로 전달하지 않았기 때문에, scope은 부모에 종속됩니다. 컴포넌트가 `waitFor`가 완료되기 전에 마운트 해제되더라도 괜찮습니다. 부모 스코프가 정리될 때 자동으로 자식 스코프도 함께 정리되기 때문입니다.
+
+## 🌃 임시 Scope를 사용하면 좋은 상황
+
+임시 effect scope는 아래의 특성을 갖는 유틸함수를 구현할 때 유용합니다.
+
+- 짧은 수명의 반응성이 필요한 유틸리티 함수
+- 조건이 만족되면 clean up 해야하는 유틸리티 함수
+- 끝나자마자 clean up 되어야 하는 함수
+- 여러번 호출해야 하는 유틸함수를
+
+핵심은 임시 scope가 일시적인 반응형 콘텍스트를 제공한다는 것 입니다. 임시 scope는 동작하는데 필요한 시간 동안만 존재하다가 끝나면 사라집니다.
