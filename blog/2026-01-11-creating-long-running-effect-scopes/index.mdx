@@ -254,3 +254,123 @@ Component 1 scope stopped - but watcher is in detached scope!
 watch 3
 Success! We see "watch 3" because watcher is detached.
 ```
+
+## 🌃 createSharedComposable의 문제점
+
+`createSharedComposable`을 사용하면 특정 컴포넌트에 effect들이 고정되는 문제를 해결할 수 있지만, effect scope이 중지되지 않습니다.
+
+이 composable을 사용하고 있는 컴포넌트들이나 effect scope들을 추적해야 합니다. 마지막 컴포넌트나 effect scope에서 사용이 끝나면 해당 scope를 중지해야하기 때문입니다.
+
+아래 코드에서 문제를 살펴보겠습니다.
+
+```js
+function runDemo() {
+  let storeReference = null;
+
+  // 본인의 scope에서 store를 사용하고 있는 component
+  console.log('Simulating component mounting and using store:');
+  const componentScope = effectScope();
+  componentScope.run(() => {
+    console.log('Component using store:');
+    const componentStore = useStore();
+    componentStore.count.value++;
+    storeReference = componentStore;
+  });
+
+  console.log('Store created and used - watcher should be active');
+
+  // 컴포넌트 언마운트
+  console.log('\nSimulating component unmounting:');
+  componentScope.stop();
+  console.log('Component scope stopped');
+
+  console.log('\nTesting if detached scope was automatically cleaned up:');
+  storeReference.count.value++;
+  console.log(
+    'If you see "watch 2" above, the detached scope was NOT cleaned up!',
+  );
+}
+```
+
+위 코드는 컴포넌트가 store를 사용하고 있는 상황을 재현한것입니다. Scope을 중지함으로써 컴포넌트의 언마운트 또한 재현했습니다.
+
+하지만 컴포넌트가 언마운트되더라도 count를 바꿀때마다 watcher가 실행도비니다. Watcher와 detached scope은 제거되지 않았습니다.
+
+```
+Simulating component mounting and using store:
+Component using store:
+watch 1
+Store created and used - watcher should be active
+
+Simulating component unmounting:
+Component scope stopped
+
+Testing if detached scope was automatically cleaned up:
+watch 2
+If you see "watch 2" above, the detached scope was NOT cleaned up!
+```
+
+## 🌃 해결책: 참조의 갯수를 관리하기
+
+`createSharedComposable`를 사용하는 컴포넌트의 수를 제대로 추적할 수 있도록 구현 방식을 변경해야 합니다.
+이렇게 구현 방식을 변경하면 해당 composable을 사용하고 있는 마지막 컴포넌트가 언마운트될 때 scope도 정지됩니다.
+
+```js
+import { effectScope, ref, watch, onScopeDispose } from '@vue/reactivity';
+
+function createSharedComposable(fn) {
+  let scope,
+    cached,
+    refs = 0;
+
+  return (...args) => {
+    // composable이 호출될 때 참조 갯수를 증가
+    refs++;
+
+    onScopeDispose(() => {
+      // scope이 disposed 될 때 참조 갯수 감소
+      refs--;
+
+      if (refs === 0 && scope) {
+        scope.stop();
+        scope = undefined;
+        cached = undefined;
+      }
+    });
+
+    if (!scope) {
+      scope = effectScope(true);
+      cached = scope.run(() => fn(...args));
+    }
+
+    return cached;
+  };
+}
+```
+
+우선, 공유 composable에 대한 참조의 횟수를 추적하기 위해 `refs` 변수를 생성합니다. 이 함수가 호출될 때마다 카운터를 증가시켜 모든 참조를 추적합니다.
+
+다음으로, `onScopeDispose`를 사용하여 이 composable을 사용하고 있는 effect가 몇 번 닫히거나 중지되었는지를 추적합니다.
+
+`onScopeDispose`는 항상 현재의 effect scope와 연결됨을 명심하세요.
+따라서 다른 컴포넌트에서 공유 composable을 호출한다면, `onScopeDispose` 함수는 서로 다른 effect scope와 연결됩니다.
+
+마지막으로 `refs`의 값이 0이되면 effect scope을 중지해야 합니다. `refs`가 0과 같은지 확인하고, scope가 존재하는지를 확인한 후에 `scope.stop()`을 호출하여 모든 것을 정리합니다.
+
+## 🌃 결과
+
+```
+Simulating component mounting and using store:
+Component using store:
+watch 1
+Store created and used - watcher should be active
+
+Simulating component unmounting:
+Component scope stopped (reference count should now be 0)
+
+Testing if detached scope was automatically cleaned up:
+If you do NOT see "watch 2" above, the detached scope was automatically cleaned up!
+
+The detached scope was automatically cleaned up!
+This is the solution - automatic cleanup via reference counting!
+```
