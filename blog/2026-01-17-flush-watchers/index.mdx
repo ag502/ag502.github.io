@@ -109,3 +109,95 @@ Watcher의 실행시점을 변경하려면 `flush` 옵션을 사용해야 합니
   5. 올바른 요소로 스크롤 됨
 
 Post flush timing은 항상 watcher가 업데이트된 DOM상태에 접근할 수 있게 합니다.
+
+## 🌃 Sync Flush Timing
+
+Vue는 성능 향상을 위해 watcher의 업데이트를 배치 처리합니다. 하지만 때때로 같은 틱 내에서 여러개의 변경 사항이 발생하더라도 모든 중간 값을 캡처할 필요가 있습니다.
+
+이런 경우에 sync flush watcher가 유용합니다.
+
+### 🎆 기본적인 배치 동작
+
+빠르게 여러번 업데이트되는 카운터를 예시로 들어보겠습니다.
+
+```html
+<template>
+  <div>
+    <button @click="updateMultipleTimes">Update 5 Times</button>
+
+    <p>Current Value: {{ count }}</p>
+    <p>Watcher Executions: {{ watcherExecutions }}</p>
+    <p>History: {{ history.join(', ') }}</p>
+  </div>
+</template>
+
+<script setup>
+  import { ref, watch } from 'vue';
+
+  const count = ref(0);
+  const watcherExecutions = ref(0);
+  const history = ref([]);
+
+  function updateMultipleTimes() {
+    for (let i = 0; i < 5; i++) {
+      count.value += 1;
+    }
+  }
+
+  watch(count, (newValue) => {
+    watcherExecutions.value++;
+    history.value.push(newValue);
+    console.log(`Watcher fired: ${newValue}`);
+  });
+</script>
+```
+
+버튼을 클릭하면, 카운트는 0부터 5까지 하나의 틱에서 증가합니다. 하지만 watcher는 단 한번만 실행됩니다.
+
+위 코드를 실행하면 아래와 같은 결과가 출력됩니다.
+
+```
+Current Value: 5
+Watcher Executions: 1
+History: 5
+```
+
+중간값들(1, 2, 3, 4)는 Vue의 배치로 인해 무시됩니다.
+
+### 🎆 즉각적인 업데이트를 위해 sync flush 사용하기
+
+모든 중간값을 캡처하기 위해소는 `flush: sync` 옵션을 사용할 수 있습니다.
+
+```html
+<script setup>
+  watch(
+    count,
+    (newValue) => {
+      watcherExecutions.value++;
+      history.value.push(newValue);
+      console.log(`Watcher fired: ${newValue}`);
+    },
+    {
+      flush: 'sync',
+    },
+  );
+</script>
+```
+
+위 코드를 실행하면 아래와 같이 출력됩니다.
+
+```
+Current Value: 5
+Watcher Executions: 5
+History: 1, 2, 3, 4, 5
+```
+
+Watcher는 모든 변경에 대해 즉시 실행되며 모든 중간값들도 캡처됩니다.
+
+### 🎆 Sync Flush를 사용해야 하는 경우
+
+Sync watcher는 모든 중간값들을 순서대로 캡처하기 때문에 로깅, 분석 또는 상태 기록 추적에 사용될 수 있습니다.
+
+Sync watcher는 DOM 업데이트에 의존하지 않습니다. DOM이 업데이트되기 전에 실행되기 때문에 업데이트된 DOM요소에 접근할 수 없습니다.
+
+Sync watcher는 Vue의 배치 최적화를 우회하기 때문에 성능에 악영향을 미칠수는 있습니다.
