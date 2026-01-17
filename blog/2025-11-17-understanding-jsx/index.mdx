@@ -339,3 +339,359 @@ HTML에서 속성키 만을 사용하여 값을 `true`로 설정할 수 있습�
 ```
 
 :::
+
+## 🌃 HTML과의 차이점
+
+JSX는 HTML과 비슷하지만 근본적인 차이가 있습니다. 그 차이를 살펴보겠습니다.
+
+### 🎆 예약어
+
+자바스크립트에는 여러개의 예약어가 존재합니다. 예약어는 고유한 기능을 가지고 있는 키워드 입니다. 이미 사용되고 있기 때문에 JSX에서는 사용할 수 없습니다.
+
+예를 들어 `const while = 10;` 와 같은 코드는 오류가 발생합니다. `while`이라는 예약어가 자바스크립트의 반복문에서 사용되고 있기 때문입니다.
+
+```js
+let count = 6;
+
+while (count > 0) {
+  console.log('Countdown:', count);
+  count--;
+}
+```
+
+JSX는 자바스크립트로 변환되기 때문에 JSX에서 예약어를 사용할 수 없습니다. 이것이 문제가 되는 이유는 HTML 속성중에 자바스크립트의 예약어와 겹치는 속성이 있기 때문입니다.
+
+```js
+/* eslint-disable */
+const element = (
+  <div>
+    <label for="name">Name:</label>
+    <input id="name" class="fun-input" />
+  </div>
+);
+```
+
+위 코드를 자바스크립트로 변환하게 되면, 두개의 예약어를 사용하고 있음을 알게됩니다.
+
+- `for`
+- `class`
+
+이러한 충돌을 해결하기 위해 리액트는 두개의 예약어에 약간의 변형을 줬습니다.
+
+```js
+const element = (
+  <div>
+    <label htmlFor="name">Name:</label>
+    <input id="name" className="fun-input" />
+  </div>
+);
+```
+
+- `for` -> `htmlFor`
+- `class` -> `className`
+
+:::info 정상적으로 동작하긴 합니다. 하지만...
+JSX에서 `for`나 `class`를 사용하면 리액트 프레임워크가 경고를 노출하지만 오류는 발생하지 않습니다. 사실 정상 동작합니다.
+
+특정 상황에서는 예약어에 대한 충돌이 발생하지 않습니다. 하지만 문제가 발생하는 상황이 존재하기 때문에 `for`나 `class`를 사용하면 안됩니다.
+
+조금 더 깊게 들어가보면, `for`와 `class`는 HTML 요소에 사용하는 경우 정상적으로 동작합니다. 하지만 커스텀 컴포넌트에서 사용할 경우 문제가 발생합니다.
+:::
+
+### 🎆 Self-closing 태그
+
+HTML은 상당히 느슨한 언어입니다. 예를 들어, 아래의 HTML 코드는 정상적인 코드입니다.
+
+```html
+<!-- prettier-ignore -->
+<div>
+  <p>This paragraph is opened… but never closed.
+  <p>We're omitting the closing tags!
+</div>
+```
+
+Paragraph 태그는 중첩되지 않습니다. 브라우저는 두번째 paragraph가 시작하기전에 첫번째 paragraph가 닫힌다는걸 알정도로 똑똑하기 때문에,
+자동으로 `</p>` 태그를 추가합니다. 자바스크립트 엔진이 생략된 세미콜론을 자동으로 추가해주는 것과 비슷합니다.
+
+JSX는 다릅니다. 열린 태그는 반드시 닫아야 합니다.
+
+```js
+const element = (
+  <div>
+    <p>This paragraph is opened… but never closed.</p>
+    <p>We are omitting the closing tags!</p>
+  </div>
+);
+```
+
+HTML5에서 특정 요소는 닫는 태그가 없습니다. 예를 들어, `img` 태그는 자식을 가질 수 없고 닫을 필요도 없습니다.
+
+```html
+<!-- prettier-ignore -->
+<img src="https://example.com/image.png" alt="An image" >
+```
+
+JSX에서는 명시적으로 태그를 닫아줘야 합니다. "self-closing" 태그를 이용해서 명시적으로 닫을 수 있습니다.
+
+```js
+const element = <img src="https://example.com/image.png" alt="An image" />;
+```
+
+(self-closing 태그는 예전 버전의 HTML에서 유래했습니다. 현대의 HTML에서 필수적이지 않지만 여전히 유효합니다.)
+
+### 🎆 Case-sensitive 태그
+
+HTML은 case-insensitive한 언어입니다. 수년전에는 HTML을 모두 대문자로 쓰는것이 보편적이였습니다.
+
+```html
+<!-- prettier-ignore -->
+<MAIN>
+  <HEADER>
+    <H1>Hello World!</H1>
+  </HEADER>
+  <P>
+    This HTML is so loud!
+  </P>
+</MAIN>
+```
+
+반대로, JSX는 case-sensitive한 언어입니다. 태그는 반드시 소문자로 작성해야 합니다.
+
+```js
+const element = (
+  <main>
+    <header>
+      <h1>Hello World!</h1>
+    </header>
+    <p>This HTML is so loud!</p>
+  </main>
+);
+```
+
+이 제한은 다소 자의적으로 보이지만, 여기에 매우 중요한 이유가 있습니다.
+JSX 컴파일러는 태그의 대소문자 사용 여부를 통해 해당 요소가 HTML 태그인지 커스텀 컴포넌트인지를 구별합니다.
+
+### 🎆 Case-sensitive 속성
+
+JSX에서 속성은 camelCase로 작성해야 합니다.
+
+예를 들어, 아래는 유효한 HTML입니다.
+
+```html
+<video src="https://example.com/video.mp4" autoplay="true />
+```
+
+JSX에서는 "autoplay"의 글자 "p"를 대문자로 작성해야 합니다. "auto"와 "play"는 분리된 단어이기 때문입니다.
+
+```js
+const element = <video src="https://example.com/video.mp4" autoPlay={true} />;
+```
+
+(`true`를 문자열로 유지하는 대신 표현식 슬롯을 이용하여 `{true}`로 작성했습니다. 둘 다 유효한 방식이지만 표현식 슬롯이 좀 더 리액트에 맞는 방식입니다.)
+
+속성이 복수개의 단어로 이루어져 있는지 판단하는 것은 어렵습니다. 특히나 모국어가 영어가 아니라면 더더욱 어렵습니다.
+다행이도 만약 실수를 했다면 개발자 도구에 경고문이 노출됩니다.
+
+```js
+/* eslint-disable */
+const element = (
+  <video
+    src="https://sandpack-bundler.vercel.app/videos/cat-skateboarding.mp4"
+    autoplay={true}
+  />
+);
+```
+
+:::warning
+Invalid DOM property 'autoplay'. Did you mean 'autoPlay'?
+:::
+
+camelCase로 작성되어야 하는 다른 속성은 아래와 같습니다.
+
+- `onclick` -> `onClick`
+- `tabindex` -> `tabIndex`
+- `stroke-dasharray` -> `strokeDasharray`
+
+:::warning Data와 ARIA 속성은 dash를 유지합니다.
+Data 속성과 ARIA 속성은 camelCase의 규칙을 따르지 않습니다.
+
+아래은 유효한 JSX 코드입니다.
+
+```js
+const element = (
+  <button data-test-id="close-dialog-button" aria-label="Close dialog">
+    <img alt="" src="/icons/x.svg" />
+  </button>
+);
+```
+
+Data 속성은 리액트에서 자주 사용되지는 않습니다만, 자동화된 테스트에서 요소에 라벨을 붙일 때 유용합니다.
+ARIA 속성은 접근성 요소를 추가할 때 사용됩니다.
+:::
+
+### 🎆 인라인 스타일
+
+HTML에서 style 속성은 지정된 요소에 스타일을 직접 지정할 수 있습니다.
+
+```html
+<h1 style="font-size: 2rem;">Hello World!</h1>
+```
+
+JSX에서 `style`은 객체를 받습니다.
+
+```js
+const element = <h1 style={{ fontSize: '2rem' }}>Hello World!</h1>;
+```
+
+:::info 이중 중괄호??
+이중 중괄호를 사용하는게 조금 이상할 수 있습니다. 왜 아래와 같이 쓰면 안될까요?
+
+```text
+const element = (
+  <h1  style={fontSize: '2rem'}>
+    Hello World!
+  </h1>
+)
+```
+
+앞 글에서 살펴봤듯이 자바스크립트 표현식을 JSX에 삽입하기위해 중괄호를 사용했습니다. 예를 들어, 아래와 같이 중괄호를 사용할 수 있습니다.
+
+```js
+const avatarSrc = '/image/avatar.png';
+
+const element = <img alt="user avatar" src={avatarSrc} />;
+```
+
+스타일을 적용하려면 설정하려는 CSS 속성과 해당값을 담은 객체를 전달해야 합니다.
+
+```js
+const customStyles = {
+  fontSize: '2rem',
+  fontWeight: 'bold',
+};
+
+const element = <h1 style={customStyles}>Hello World!</h1>;
+```
+
+이 스타일들을 가지고 있는 변수를 생성하기보다는, 객체 자체를 JSX 표현식 슬롯에 바로 넣습니다.
+
+```jsx
+const element = (
+  <h1
+    style={{
+      fontSize: '2rem',
+      fontWeight: 'bold',
+    }}
+  >
+    Hello World!
+  </h1>
+);
+```
+
+두가지의 중괄호가 필요합니다.
+
+1. JSX에서 자바스크립트 표현식을 삽입하기 위한 표현식 슬롯
+2. CSS 선언을 위한 객체
+
+:::
+
+모든 CSS 속성은 "camelCase"로 작성됩니다. 모든 dash는 다음 단어의 대문자로 변경됩니다.
+
+- `background-position` -> `backgroundPosition`
+- `border-bottom-color` -> `borderBottomColor`
+
+`-webkit-font-smoothing`과 같은 vendor prefix는 `WebkitFontSmoothing`처럼 첫글자를 대문자로 변경합니다.
+
+또한 리액트는 특정 CSS 속성에 `px`을 자동으로 붙여줍니다.
+
+```js
+<div style={{ width: 200, paddingTop: 8 }}></div>
+```
+
+`flex`나 `lineHeight`와 같이 단위가 없는 속성을 주의하세요.
+
+예를 들어, 아래의 코드는 20px의 높이가 아니라 기본값보다 20배 큰 라인 높이를 의미합니다.
+
+```jsx
+<p
+  style={{
+    lineHeight: 20, // line-height: 20
+  }}
+></p>
+```
+
+리액트에서는 단위가 없는 값을 사용하는것이 관례이지만, 원한다면 단위를 사용해도 됩니다.
+
+```js
+<p style={{ width: '200px', paddingTop: '8px' }}></p>
+```
+
+:::인라인 스타일이 나쁜가?
+인라인 스타일을 사용하지 말라는 것을 들어본적이 있을겁니다. 이것들은 `!important`와 같이 특수한 상황에서 최후의 수단으로만 사용해야 합니다.
+
+개인적으로, 스타일의 주요 수단으로 인라인 스타일을 쓰지말아야 하는것은 동의하지만, 인라인 스타일이 더 나은 선택인 경우도 있습니다.
+:::
+
+## 🌃 공백관련 주의사항
+
+JSX에서 가장 흔한 함정중의 하나를 살펴보겠습니다.
+
+```js
+import { createRoot } from 'react-dom/client';
+
+const daysUntilSantaReturns = 123;
+
+const element = (
+  <div>
+    <strong>Days until Santa returns:</strong>
+    {daysUntilSantaReturns}
+  </div>
+);
+
+const container = document.querySelector('#root');
+const root = createRoot(container);
+root.render(element);
+```
+
+굵은 글씨와 숫자 사이에 공백이 없는것을 눈치채셨나요? `returns: 123`이 아니라 `return:123`이 출력됩니다.
+
+왜 이런 현상이 발생하는지를 알려면, 어떻게 이 JSX가 자바스크립트로 변환되는지를 살펴보아야 합니다.
+
+```js
+const element = React.createElement(
+  'div',
+  {},
+  React.createElement('strong', {}, 'Days until Santa returns:'),
+  daysUntilSantaReturns,
+);
+```
+
+`div` 태그는 `strong` 태그와 `daysUntilSantaReturns` 변수를 자식으로 가집니다.
+
+JSX는 HTML로 컴파일되는것이 아니라, 자바스크립트로 컴파일된다는 것을 명심하세요. 그리고 해당 자바스크립트가 실행될 때는 두 개의 HTML노드가 생성되고 추가됩니다.
+
+- 텍스트를 가진 `<strong>` 태그
+- `123`의 값을 가진 텍스트 노드
+
+그래서 이를 어떻게 고치면 좋을까요? 가장 흔한 방법은 단일 공백을 중괄호에 추가하는 것입니다.
+
+```js
+// prettier-ignore
+<div>
+  <strong>Days until Santa returns:</strong>
+  {' '}
+  {daysUntilSantaReturns }
+</div>
+```
+
+위 코드는 아래와 같이 컴파일됩니다.
+
+```js
+const element = React.createElement(
+  'div',
+  {},
+  React.createElement('strong', {}, 'Days until Santa returns: '),
+  ' ',
+  daysUntilSantaReturns,
+);
+```
