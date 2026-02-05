@@ -1,0 +1,366 @@
+---
+slug: iteration
+title: 리스트 렌더링
+tags: [react]
+unlisted: true
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+이 문서는 색인되지 않습니다.
+
+{/* truncate */}
+
+리액트에서는 반복되는 요소를 렌더링하기 위해 순수 자바스크립트의 반복문을 이용합니다.
+
+## 🌃 데이터 맵핑하기
+
+아래처럼 배열이 있다고 가정해보겠습니다.
+
+<Tabs>
+  <TabItem value="App.js" label="App.js">
+    ```jsx
+    import ContactCard from "./ContactCard";
+
+    const data = [
+      {
+        id: "sunita-abc123",
+        name: "Sunita Kumar",
+        job: "Electrical Engineer",
+        email: "sunita.kumar@acme.co",
+      },
+      {
+        id: "henderson-def456",
+        name: "Henderson G. Sterling II",
+        job: "Receptionist",
+        email: "henderson-the-second@acme.co",
+      },
+      {
+        id: "aio-ghi789",
+        name: "Aoi Kobayashi",
+        job: "President",
+        email: "kobayashi.aoi@acme.co",
+      },
+    ];
+
+    function App() {
+      return (
+        <ul>
+          <ContactCard
+            name={"Name goes here"}
+            job={"Job goes here"}
+            email={"Email goes here"}
+          />
+        </ul>
+      );
+    }
+    ```
+
+  </TabItem>
+
+  <TabItem value="ContactCard.js" label="ContactCard.js">
+    ```jsx
+    function ContactCard({ name, job, email }) {
+      return (
+        <li className="contact-card">
+          <dl>
+            <dt>Job</dt>
+            <dd>{job}</dd>
+            <dt>Email</dt>
+            <dd>{email}</dd>
+          </dl>
+        </li>
+      );
+    }
+    ```
+
+  </TabItem>
+</Tabs>
+
+`data` 배열에 있는 각 연락처에 대해 이름/직업/이메일을 전달하여 `ContactCard` 컴포넌트를 생성하려고 합니다.
+
+Vue나 Angular와 같은 다른 프레임워크에서는 반복문을 위한 특별한 문법을 제공합니다. 하지만, 리액트에서는 순수한 자바스크립트를 사용합니다.
+반복과 같은 작업을 수행하기 위한 "리액트 구문"은 없습니다.
+
+다른 템플릿 언어와 다르게 `v-for`나 `#each`와 같이 반복을 도와주는 디렉티브는 없습니다. 대신 리액트에서 제공하는 기능은 있습니다.
+배열을 전달하면 리액트는 이 배열의 각 항목을 풀어 렌더링해 줍니다. 예를 들어 `{['hello', 'world']}` 배열을 전달하면 "helloworld"가 DOM에 포함됩니다.
+따라서 해결책은 리액트 요소의 배열을 생성하고 JSX에 전달하는 것입니다.
+
+요소의 배열을 생성하는 방법은 많습니다. 예를 들어 `for` 반복문을 사용할 수도 있습니다. 하지만 가장 일반적인 방법은 `map` 함수를 사용하는 것입니다.
+`data.map` 함수를 호출하여 각 항목마다 `<ContactCard>` 요소를 렌더링합니다. 그런 다음 `<ul>` 내부에 해당 배열을 받을 표현식 슬롯을 만들 수 있습니다.
+
+위 내용을 코드로 작성하면 아래와 같습니다.
+
+```jsx
+import ContactCard from './ContactCard';
+
+const data = [
+  {
+    id: 'sunita-abc123',
+    name: 'Sunita Kumar',
+    job: 'Electrical Engineer',
+    email: 'sunita.kumar@acme.co',
+  },
+  {
+    id: 'henderson-def456',
+    name: 'Henderson G. Sterling II',
+    job: 'Receptionist',
+    email: 'henderson-the-second@acme.co',
+  },
+  {
+    id: 'aio-ghi789',
+    name: 'Aoi Kobayashi',
+    job: 'President',
+    email: 'kobayashi.aoi@acme.co',
+  },
+];
+
+function App() {
+  return (
+    <ul>
+      {data.map((contact) => (
+        // eslint-disable-next-line react/jsx-key
+        <ContactCard
+          name={contact.name}
+          job={contact.job}
+          email={contact.email}
+        />
+      ))}
+    </ul>
+  );
+}
+```
+
+## 🌃 JSX 안의 JS, 그 안의 JSX
+
+리액트에서 반복문을 사용할 때 아래와 같은 구조를 자주 볼 수 있습니다.
+
+```jsx
+<ul>
+  {items.map((item) => (
+    // eslint-disable-next-line react/jsx-key
+    <li>{item}</li>
+  ))}
+</ul>
+```
+
+두 번째 줄에서, 중괄호를 사용하여 JSX에 기본적인 자바스크립트 코드를 추가합니다. 하지만 그 다음에 중괄호 내부에서 JSX를 사용했습니다!
+일부 개발자들은 이것이 유효한 문법이라는 사실에 놀랍니다.
+
+JSX 컴파일러는 중첩된 JSX 호출을 문제없이 해결할 수 있습니다. 최종결과는 아래와 같습니다.
+
+```jsx
+React.createElement(
+  'ul',
+  {},
+  items.map((item) => React.createElement('li', {}, item)),
+);
+```
+
+## 🌃 Keys
+
+앞에서 아래와 같은 경고를 봤을 겁니다.
+
+:::warning
+Warning: Each child in a list should have a unique "key" prop.
+:::
+
+배열을 리액트에 전달할 때 각 요소를 고유하게 식별할 수 있도록 도와주는 수단이 필요합니다.
+
+앞에서 살펴본 코드를 수정해보겠습니다.
+
+```jsx
+const data = [
+  {
+    id: 'sunita-abc123',
+    name: 'Sunita Kumar',
+    job: 'Electrical Engineer',
+    email: 'sunita.kumar@acme.co',
+  },
+];
+
+function App() {
+  return (
+    <ul>
+      {data.map((contact) => (
+        <ContactCard
+          key={contact.id}
+          name={contact.name}
+          job={contact.job}
+          email={contact.email}
+        />
+      ))}
+    </ul>
+  );
+}
+```
+
+다행히 `data` 배열의 주소 데이터는 `id`라는 고유한 식별자를 가지고 있습니다. 해당 문자열을 `key`로 설정하면 리액트의 경고는 사라집니다.
+
+`key`의 목적은 각각의 리액트 요소를 고유하게 식별할 수 있게 해줍니다.
+
+### 🎆 Key가 필요한 이유
+
+Key가 왜 필요한지를 알려면 리액트의 동작 원리를 깊이 이해해야 합니다. 이 내용은 뒤에서 알아보기로 하고, 이 글에서는 개괄적인 수준에서 설명하겠습니다.
+
+리액트는 사실 우리가 데이터를 바꿀때 어떤 일이 일어나는지 정확히 알지 못합니다. 리액트는 변경전과 후의 모습만 볼 수 있습니다.
+따라서 리액트는 새로운 스냅샷을 보고 DOM을 어떻게 변경해야 할지 결정해야 합니다. 하지만 변경후의 스냅샷처럼 되는 방법은 수만가지가 넘고, 어떤 방법을 선택해야하는지 알지 못합니다.
+각각의 방법은 성능 관점에서 모두 다른 결과를 만들며 버그도 발생할 수 있습니다.
+
+Key는 리액트에게 '길'을 알려줍니다. 모든 스냅샷에서 각 요소들을 고유하게 식별하면, 리액트는 무엇을 해야하는지 알 수 있으며 최적의 성능으로 변경후의 스냅샷처럼 DOM을 업데이트 합니다.
+
+### 🎆 props로써의 key
+
+Key와 관련해서 의문점이 하나 있습니다. 아래의 JSX 코드를 살펴보겠습니다.
+
+```jsx
+const element = (
+  <ContactCard
+    key="sunita-abc123"
+    name="Sunita Kumar"
+    job="Electrical Engineer"
+    email="sunita.kumar@acme.co"
+  />
+);
+```
+
+위 코드에서 `key`, `name`, `job`, `email`을 props로 전달했습니다.
+
+하지만 `ContactCard` 컴포넌트에서 `console.log`를 추가하면 무언가가 빠졌다는것을 알 수 있습니다.
+
+```jsx
+function ContactCard({ key, name, job, email }) {
+  console.log(key); // undefined
+  console.log(name); // Sunita Kumar
+  console.log(job); // Electrical Engineer
+  console.log(email); // sunita.kumar@acme.co
+
+  return <li className="contact-card">{/*  */}</li>;
+}
+```
+
+4개의 props를 전달했지만, 오직 3개만 출력됐습니다!, `key`의 값이 출력되지 않았습니다.
+
+사실은 이렇습니다. 리액트에는 몇개의 "예약어"가 있습니다. `key`는 그중 하나입니다.
+리액트 요소에 `key`를 전달하는것은 사실 props를 전달하는것이 아닙니다.
+
+좀 더 자세하게 살펴보겠습니다. 먼저 JSX가 아닌 순수한 자바스크립트로 살펴보겠습니다.
+
+```js
+const element = React.createElement(ContactCard, {
+  key: 'sunita-abc123',
+  name: 'Sunita Kumar',
+  job: 'Electrical Engineer',
+  email: 'sunita.kumar@acme.co',
+});
+```
+
+아직까지는 `key`가 props로 전달된거 같습니다. 계속 가보죠.
+
+위 코드는 `React.createElement` 함수를 호출한 것입니다. 이름이 의미하는 것처럼, 이 함수는 리액트 요소를 생성합니다.
+만약 이 코드를 실행한다면, 아래와 같은 결과를 얻을 것입니다.
+
+```js
+const element = {
+  type: ContactCard,
+  key: 'sunita-abc123',
+  props: {
+    name: 'Sunita Kumar',
+    job: 'Electrical Engineer',
+    email: 'sunita.kumar@acme.co',
+  },
+};
+```
+
+`React.createElement` 함수는 데이터를 받아 리액트 요소를 생성하는데, 이 때 요소의 `key`를 최상위 프로퍼티로 설정합니다.
+
+리액트 요소는 리액트가 생성해야 하는 것을 설명하는 자바스크립트 객체입니다. 이 경우, 요소는 `ContactCard` 컴포넌트를 설명합니다.
+
+Key는 특정 리액트 요소를 식별하는데 사용됩니다. 이는 요소 자체의 속성이며, 컴포넌트에 전달해야 하는 속성이 아닙니다.
+
+### 🎆 Key 규칙들
+
+Key에 대한 몇가지 규칙을 살펴보겠습니다.
+
+1. 최상위 요소  
+   이 조건을 만족시키기 위해서는, `key`는 반드시 `map` 호출 내의 최상위 요소에 적용되어야 합니다.
+
+   예를 들어, 아래의 예시는 올바르지 않습니다.
+
+   ```
+   function NavigationLinks({ links }) {
+     return (
+       <ul>
+         {links.map((item) => (
+           <li>
+             <a key={item.id} href={item.href}>
+               {item.text}
+             </a>
+           </li>
+         ))}
+       </ul>
+     );
+   }
+   ```
+
+   리액트의 관점에서 보면 `<li>` 리액트 요소 그룹이 있는데 고유한 식별자가 없습니다. 리액트는 자식요소까지 key를 탐색하지 않습니다.
+
+   따라서 아래와 같이 수정해야 합니다.
+
+   ```jsx
+   function NavigationLinks({ links }) {
+     return (
+       <ul>
+         {links.map((item) => (
+           <li key={item.id}>
+             <a href={item.href}>{item.text}</a>
+           </li>
+         ))}
+       </ul>
+     );
+   }
+   ```
+
+   만약 [fragment](./fragments)를 사용하고 있다면, key를 적용하기 위해 `React.Fragment`를 사용해야 합니다.
+
+   ```jsx
+   function Thing({ data }) {
+     return data.map((item) => (
+       <React.Fragment key={item.id}>
+         <p>{item.content}</p>
+         <button>Cancel</button>
+       </React.Fragment>
+     ));
+   }
+   ```
+
+2. 전역이 아님  
+   많은 개발자들이 key가 전역적으로 고유하다고 생각하지만 그렇지 않습니다. Key는 배열안에서만 고유합니다.
+
+   따라서 아래의 코드는 올바른 코드입니다.
+
+   ```jsx
+   function App() {
+     return (
+       <ul>
+         {data.map((contact) => (
+           <ContactCard
+             key={contact.id}
+             name={contact.name}
+             job={contact.job}
+             email={contact.email}
+           />
+         ))}
+         {data.map((contact) => (
+           <ContactCard
+             key={contact.id}
+             name={contact.name}
+             job={contact.job}
+             email={contact.email}
+           />
+         ))}
+       </ul>
+     );
+   }
+   ```
