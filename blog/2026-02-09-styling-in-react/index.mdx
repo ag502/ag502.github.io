@@ -1,0 +1,97 @@
+---
+slug: styling-in-react
+title: 리액트에 스타일 적용하기
+tags: [react]
+unlisted: true
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+이 문서는 색인되지 않습니다.
+
+{/* truncate */}
+
+리액트는 스타일링에 있어 특정 방식을 강요하지 않습니다. 따라서 리액트에 CSS를 적용하는 방법이 많습니다.
+
+기술적으로, 전통적인 방식으로 일을 처리하는 데 아무런 문제가 없습니다. CSS 파일들을 `index.html` 파일내부의 `<link>` 태그에 포함시킬 수 있습니다.
+
+하지만 솔직히 말해서, 리액트를 이용한 개발에서 최고의 방법을 원한다면 더 나은 방법들이 있습니다.
+
+[컴포넌트](/blog/components) 섹션에서 언급한 그림을 기억하십니까?
+
+컴포넌트의 핵심 아이디어는 각각의 컴포넌트가 마크업(JSX), 로직(JS)과 스타일(CSS)을 하나로 묶음이라는 것입니다.
+`Button` 컴포넌트는 해당 컴포넌트와 연관된 스타일을 가지고 있어야 합니다.
+
+이런 구조라면, CSS를 적용하는 것이 훨씬 간단해집니다.
+
+전통적인 CSS 파일에는 하나의 요소에 서로 다른 수많은 selector가 존재합니다. 이 selector들은 기존의 스타일을 오버라이드 하기 위해 더욱더 복잡해집니다.
+이는 거대한 프로젝트에서 CSS를 작성할 때 오랫동안 골칫거리였습니다. 이 문제를 해결하기 위해 많은 방법들이 제시되었고 그중 하나가 BEM(Block Element Modifier)입니다.
+
+BEM의 규칙을 100% 따랐을 때 CSS 작성은 훨씬 간단해집니다. 하지만 프로젝트 규모가 커지고, 개발자가 많아짐에 따라 규칙을 어기게 됩니다.
+
+리액트가 발전함에 따라 개선할 여기가 있다는걸 깨달았습니다. 그 후 몇년동안 `styled-components`, `emotion`, `vanilla-extract` 와 같은 많은 도구가 나왔습니다.
+이 도구들은 스코핑 기능을 내장하고 있어서 고유한 selector들을 자동으로 생성해줍니다.
+
+## 🌃 CSS Modules
+
+간단한 컴포넌트를 만들어 보겠습니다.
+
+<Tabs>
+    <TabItem value="SlideNote.js" label="SlideNote.js">
+    ```jsx
+    import styles from './Sidenote.module.css';
+
+    function Sidenote({ title, children }) {
+      console.log(styles)
+      return (
+        <aside className={styles.wrapper}>
+          <h3 className={styles.title}>{title}</h3>
+          <p>{children}</p>
+        </aside>
+      );
+    }
+    ```
+    </TabItem>
+    <TabItem value="Sidenote.module.css" label="Sidenote.module.css">
+    ```css
+    .wrapper {
+      padding: 24px;
+      background-color: hsl(210deg 55% 92%);
+      border-left: 3px solid hsl(245deg 100% 60%);
+      border-radius: 3px 6px 6px 3px;
+    }
+
+    .title {
+      font-size: 1rem;
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+    ```
+    </TabItem>
+
+</Tabs>
+
+위 코드를 보면 이상한점이 있습니다. 임포트된 `styles`은 어떤 역할을 할까요? 자세히 살펴보겠습니다.
+
+리액트 애플리케이션은 보통 JSX를 브라우저에서 실행할 수 있는 `React.createElement` 함수 호출로 변환하기위해 컴파일되어야 합니다.
+동시에 다른 작업도 일어납니다. Webpack과 같은 최신 번들러는 CSS 모듈처럼 JS 파일이 아닌것을 임포트할 수 있게 해줍니다.
+
+CSS 파일의 이름을 `.module.css` 끝나게 하고, 자바스크립트 모듈처럼 임포트를 하게되면 세가지일이 일어납니다.
+
+1. 모듈 내 모든 CSS 클래스에 대해 더 길고 고유성이 보장된 클래스 이름이 생성됩니다.
+2. 고유한 이름을 가진 CSS가 `head` 태그에 삽입됩니다.
+3. 짧은 클래스를 생성된 대체 클래스에 매핑하는 스타일 객체가 생성됩니다.
+
+최종적으로 아래와 같은 객체가 생성됩니다.
+
+```
+{
+  wrapper: "_components_SideNote_module__wrapper",
+  title: "_components_SideNote_module__title",
+}
+```
+
+객체의 키는 CSS 파일에서 실제로 정의된 클래스 이름입니다. 객체의 값들은 생성된 고유한 이름입니다.
+
+JSX에서 우리는 `<aside className={styles.wrapper}>` 와 같이 사용하지만 사실 `<aside className="_components_SideNote_module__wrapper">` 와 같습니다.
