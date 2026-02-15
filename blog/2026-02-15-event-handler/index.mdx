@@ -1,0 +1,162 @@
+---
+slug: event-handler
+title: 이벤트 핸들러
+tags: [react]
+unlisted: true
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+이 문서는 색인되지 않습니다.
+
+{/* truncate */}
+
+사용자가 페이지와 상호작용할 때 수백개의 이벤트들이 트리거됩니다. 동적인 웹 애플리케이션을 만들때 이벤트들은 매우 중요합니다.
+우리는 이 이벤트들을 감지하고 상태를 변경하기 위해 사용합니다. 사용자가 "X" 버튼을 클릭할 때 프롬프트를 없애거나, 폼을 제출할 때 로딩 스피너를 노출 시킵니다.
+
+이벤트에 반응하기 위해서는 구독을 해야합니다. 자바스크립트는 `addEventListener` 메서드를 통해 이를 수행하는 빌트인된 방법을 제공합니다.
+
+```js
+const button = document.querySelector('.btn');
+
+function doSomething() {
+  // Stuff here
+}
+
+button.addEventListener('click', doSomething);
+```
+
+위 코드에서, 특정한 요소(`.btn`)에 대한 특정한 이벤트(클릭)를 감지합니다. `doSomething` 함수는 이벤트를 제어하기 위해 추가되었습니다.
+사용자가 특정한 버튼을 클릭하면 핸들러 함수가 실행되고 이벤트에 대한 응답으로 작업을 수행합니다.
+
+웹 플랫폼은 이벤트에 대한 응답을 제어하기 위한 또다른 방법을 제공합니다. 핸들러를 HTML에 직접 추가할 수 있습니다.
+
+```html
+<button onclick="doSomething()">Click me</button>
+```
+
+리액트 이 방식을 활용하여 JSX에 이벤트 핸들러를 직접 전달할 수 있도록 합니다.
+
+```jsx
+function App() {
+  function doSomething() {
+    // Stuff here
+  }
+
+  return <button onClick={doSomething}>Click me</button>;
+}
+```
+
+위 코드는 `addEventListener`와 마찬가지로 동일하게 동작합니다. 사용자가 버튼을 누르면 `doSomething` 함수가 호출됩니다.
+
+이는 리액트에서 이벤트를 제어하기 위해 권장되는 방법입니다. Window 객체에서 `addEventListener`를 사용해야하는 경우도 있지만, `onClick`처럼 `onX` props를 사용하는 것이 좋습니다.
+이 방식을 사용해야 하는 이유는 다음과 같습니다.
+
+1. 자동으로 이벤트를 제거해줍니다. 이벤트 리스너를 추가했다면, `removeEventListener`를 호출하여 제거해줘야 합니다. 만약 이 단계를 생략한다면 메모리 누수가 발생할 수 있습니다.
+   "onX" 핸들러 함수를 사용한다면 리액트는 자동으로 이벤트를 제거해줍니다.
+2. 성능향상에 도움이 됩니다. 리액트가 이벤트를 제어하게 된다면, 메모리 소모량을 줄이기 위해 여러개의 이벤트 리스너들을 배치로 처리 해줍니다.
+3. DOM을 직접적으로 조작하지 않습니다. 리액트는 우리가 추상화 단계안에 머물기를 원합니다.
+   일반적으로 우리는 DOM과 직접 상호작용하는 것을 피하려고 합니다. `addEventListener`를 사용하기 위해 `querySelector`를 사용하여 요소를 찾아야 합니다. 이는 피해야 합니다.
+   올바른 방향은은 리액트가 DOM을 제어하도록 내버려두는 것입니다.
+
+## 🌃 HTML과의 차이점
+
+`onChange` props를 보면, HTML에 이벤트 핸들러를 추가하는 방식과 유사한것 처럼 보입니다. 하지만 몇가지 중요한 차이점이 있습니다.
+
+### 🎆 Camel Casing
+
+속성을 camelCase 형식으로 써야합니다. `onClick`을 대문자 `onclick`로 쓰는것이 아니라 "C"를 대문자로 써야합니다.
+`onChange`, `onKeyDown`, `onTransitionEnd` 등도 마찬가지 입니다.
+
+만약 잊어버렸다고 해도 괜찮습니다. 콘솔창에 오류가 노출되어 문제를 찾을 수 있습니다.
+
+:::warning
+Warning: Invalid event handler property 'onclick'. Did you mean 'onClick'?
+:::
+
+이 실수로 인한 오류는 쉽게 발견할 수 있습니다. 이제 흔한 실수지만 발견하기 어려운 문제를 살펴보겠습니다.
+
+### 🎆 함수 참조값 전달하기
+
+이벤트 핸들러를 리액트에 전달할 때, 함수의 참조값을 전달해야 합니다. HTML처럼 함수를 호출하지 않습니다.
+
+```
+<button onClick={doSomething} />
+
+<button onClick={doSomething()} />
+```
+
+만약 괄호를 포함한다면, 리액트 애플리케이션이 랜더링될 때 함수도 실행됩니다.
+이는 의도한 동작이 아닙니다. 함수의 참조값을 전달함으로써 사용자가 버튼을 눌렀을 때 리액트가 함수를 호출하도록 합니다.
+
+각각의 코드를 컴파일하면 아래와 같습니다.
+
+```js
+// Correct
+React.createElement('button', { onClick: doSomething });
+
+// Incorrect
+React.createElement('button', { onClick: doSomething() });
+```
+
+## 🌃 인자 전달하기
+
+만약 이벤트 핸들러에 인자를 전달하고 싶다면 어떻게 해야 할까요?
+
+`setTheme` 함수가 있고 이 함수를 라이트 모드에서 다크 모드로 전환할 때 호출한다고 가정해보겠습니다.
+
+테마를 전환하려면, 바꾸려고 하는 테마의 이름을 아래와 같이 전달해야 합니다.
+
+```js
+setTheme('dark');
+
+setTheme('light');
+```
+
+그러면 어떻게 이 함수를 리액트에서 사용할 수 있을까요?
+
+만약 `setTheme` 함수의 참조값을 `onClick` props에 전달한다면 인자를 전달할 수 없습니다.
+
+```jsx
+<button onClick={setTheme}>Toggle Theme</button>
+```
+
+인자를 전달하려면 괄호를 추가해야하는데 그렇게되면 바로 호출이 됩니다.
+
+```jsx
+<button onClick={setTheme('dark')}>Toggle Theme</button>
+```
+
+이 문제를 함수로 래핑하여 해결할 수 있습니다.
+
+```jsx
+<button onClick={() => setTheme('dark')}>Toggle Theme</button>
+```
+
+새로운 익명함수 `() => setTheme('dark')`를 생성하여 리액트에 전달했습니다. 유저가 버튼을 클릭하면 이 함수가 실행되고, 함수 내부의 코드가 실행됩니다.
+
+:::warning 성능에 미치는 악영향?
+위와 같이 익명함수를 생성하는것이 성능에 악영향을 미친다고 들어본적이 있을겁니다.
+
+이 주제에 관해 잘못된 정보들이 많이 퍼져있으며, 이로인해 개발자들이 굳이 신경쓰지 않아도 될 부분까지 신경을 써 답답합니다.
+
+빠르게 요약하자면,
+
+1. 익명함수를 생성하거나 기명함수를 생성하는 것 사이의 눈에 띌만한 성능차이는 없습니다. 화살표 함수와 일반 함수도 마찬가지 입니다.
+2. 새로운 함수를 생성하는 비용은 매우 낮습니다. 저사양의 기기에서도 눈 깜빡할 사이에 수십만개의 함수를 만들 수 있습니다.
+3. 리액트는 내장된 이벤트 delegation 시스템이 있어 다양한 최적화를 제공합니다.
+
+리액트에서 함수 사용에 대한 우려가 일리가 있는것은 사실이지만, 리액트는 이러한 우려를 관리할 수 있는 도구가 있습니다.
+`useCallback`이라는 함수이며 이 함수는 추후에 살펴보겠습니다.
+:::
+
+:::info `.bind` 사용하기
+인자를 넘겨주기 위한 다른 방법으로 `bind` 메서드를 사용할 수 있습니다.
+
+```jsx
+<button onClick={setTheme.bind(null, 'dark')}>Toggle Theme</button>
+```
+
+이 방법도 유효하지만, 리액트 커뮤니티에서 일반적이지 않으며 뚜렷한 장점도 없습니다.
+:::
