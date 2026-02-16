@@ -1,0 +1,527 @@
+---
+slug: useState-hook
+title: useState Hook 살펴보기
+tags: [react, learning-react]
+unlisted: true
+---
+
+import ReactLifecycleDiagram from './ReactLifecycleDiagram';
+
+이 문서는 색인되지 않습니다.
+
+{/* truncate */}
+
+먼저 작은 카운터 앱을 만들어보겠습니다.
+
+버튼을 클릭할 때마다 카운터가 증가합니다.
+
+```jsx live
+function Counter() {
+  const [count, setCount] = useState(0);
+
+  return (
+    <div>
+      <p>카운트: {count}</p>
+      <button onClick={() => setCount(count + 1)}>Click me</button>
+    </div>
+  );
+}
+```
+
+위 코드에서 굉장히 많은 일이 일어나고 있는데, 하나씩 살펴보겠습니다.
+
+우리의 목표는 사용자가 버튼을 클릭하는 횟수를 추적하는 것입니다. 버튼을 클릭하는 횟수처럼 동적인 값을 사용할 때 리액트의 상태가 필요합니다.
+상태는 시간이 지남에 따라 변경되는 값에 사용됩니다.
+
+상태 변수를 생성하기 위해, 우리는 `useState` 함수를 사용합니다. 이 함수는 초기값을 인자로 받습니다. 이 경우 초기값은 `0`입니다.
+이 값은 처음 페이지가 로드될 때 버튼 클릭을 하지 않았기 때문에 0으로 설정됩니다.
+
+`useState`는 hook 입니다. Hook은 리액트 내부 구현에 접근할 수 있도록 해주는 특별한 유형의 함수입니다. 자세한 것은 뒤에서 살펴보겠습니다.
+
+`useState` hook은 두개의 아이템을 가지고 있는 배열을 반환합니다.
+
+1. 첫번째는 현재 상태 값입니다. 위 예시에서는 `count`로 명명했습니다.
+2. 두번째는 상태값을 업데이트 하는 함수입니다. `setCount`로 명명했습니다.
+
+:::info 구조 분해 할당
+배열의 구조 분해 할당이 익숙치 않다면 위 코드 이해가 쉽지 않을 수 있습니다.
+
+이해를 돕기위해 동일한 로직이지만 구조 분해 할당을 사용하지 않은 코드를 작성해보겠습니다.
+
+```js
+const countArray = React.useState(0);
+
+const count = countArray[0];
+const setCount = countArray[1];
+```
+
+:::
+
+## 🌃 네이밍 컨벤션
+
+상태 변수를 생성할 때, 두개의 변수에 대한 이름은 우리가 원하는대로 명명할 수 있습니다. 예를 들어, 아래의 코드는 유효한 코드입니다.
+
+```js
+const [hello, world] = React.useState(0);
+```
+
+하지만, 일반적으로 "x, setX"의 규칙을 따르는것이 좋습니다.
+
+```js
+const [user, setUser] = React.useState();
+const [errorMessage, setErrorMessage] = React.useState();
+const [flowerBouquet, setFlowerBouquet] = React.useState();
+```
+
+구조 분해된 첫번째 변수는 우리가 추적하려는 대상의 이름입니다. 두번째 변수는 prefix로 `set`을 붙였는데, 이는 이 함수가 무언가를 변경하기 위해 호출된다는 것을 의미합니다.
+이 함수는 종종 "setter 함수"로 불리는데 상태 변수를 새로운 값으로 설정해주기 때문입니다.
+
+## 🌃 초기값
+
+리액트의 상태 변수는 초기값을 받을 수 있습니다.
+
+```js
+const [count, setCount] = useState(1);
+console.log(count); // 1
+```
+
+초기값에 함수를 전달할 수도 있습니다. 리액트는 초기값을 계산하기위해 최초 렌더링에 함수를 호출합니다.
+
+```js
+const [count, setCount] = useState(() => {
+  return 1 + 1;
+});
+console.log(count); // 2
+```
+
+이 함수는 *초기화 함수*로 불립니다. 이 함수는 초기값을 계산하는 비용이 많이 드는 연산을 수행할 때 유용합니다.
+예를 들어, 로컬 스토리지에서 값을 불러오는것이 그 예시입니다.
+
+```js
+const [count, setCount] = useState(() => {
+  const value = window.localStorage.getItem('saved-count');
+});
+```
+
+만약 로컬 스토리지 API가 익숙하지 않다면, 이 API는 기기에 값을 저장하는 방법입니다. 기기에 저장함으로써 브라우저 탭을 닫아도 값이 유지되며 다음에 접속해도 접근할 수 있습니다.
+
+인자에 초기화 함수를 넘기는 것의 장점은 비용이 비싼 연산을 매 렌더링마다 하는 것이 아니라 최초 렌더링시에 한번만 한다는 것입니다.
+
+:::info
+몇몇 분들은 인자에 함수를 넘기는것이 어떤 차이를 갖는지 궁금할 수 있습니다. 값을 전달하는 것도 한번만 계산되는게 아닌가요?
+
+두가지 방법에 어떤 차이가 있는걸까요?
+
+```
+// Form 1:
+const [count, setCount] = useState(0);
+
+// Form 2:
+const [count, setCount] = useState(() => {
+  return 0;
+});
+```
+
+제 생각에는 리액트에서 벗어나 일반 자바스크립트로 생각하는것이 이해에 도움이 될 것 같습니다.
+
+아래의 함수가 있다고 가정해보겠습니다.
+
+```js
+function run() {
+  console.log('hello');
+}
+```
+
+`run` 함수를 호출할 때마다, "Hello"라는 로그가 찍힐것입니다. 함수를 5번 호출하면 5번의 "Hello"가 콘솔에 노출됩니다.
+
+이제 함수를 약간 수정해보겠습니다.
+
+```js
+function run() {
+  const sayHi = () => {
+    console.log('Hello');
+  };
+}
+```
+
+이제 `run` 함수를 호출해도 콘솔에 아무것도 찍히지 않습니다. `console.log` 함수가 내부 함수로 쌓여져 있기 때문입니다. `run` 함수를 호출할때마다 `sayHi` 함수가 새로 생성되지만 호출은 되지 않습니다.
+
+좋습니다. 이제 리액트 코드를 다시 살펴보겠습니다.
+
+```js
+function Counter() {
+  const [count, setCount] = useState(
+    window.localStorage.getItem('saved-count'),
+  );
+}
+```
+
+`Counter` 컴포넌트를 렌더링할 때마다, 이 함수는 호출되고 내부에 있는 모든 코드도 실행될것입니다. 렌더링될 때마다 `window.localStorage` 함수가 호출되며 `React.useState` 함수에 값이 전달됩니다.
+
+이제 두번째 형태를 살펴보겠습니다.
+
+```js
+function Counter() {
+  const [count, setCount] = useState(() => {
+    return window.localStorage.getItem('saved-count');
+  });
+}
+```
+
+이 경우에 우리는 함수를 만들었습니다.
+
+```js
+() => {
+  return window.localStorage.getItem('saved-count');
+};
+```
+
+이 함수는 `React.useState()` 함수에 전달됩니다. 따라서 리액트가 이 함수를 어떻게 처리할지 결정합니다.
+
+최초의 렌더링시에 리액트는 초기값을 계산하기위해 이 함수를 호출합니다. 하지만 그 이후의 렌더링에서는 이 함수를 더이상 호출하지 않습니다.
+초기값이 이미 계산되었기 때문에 더이상 함수를 호출할 필요가 없기 때문입니다.
+
+:::
+
+## 🌃 리액트의 핵심 동작 흐름
+
+지금까지 setter 함수(`setCount`)함수를 호출하여 상태값을 업데이트할 때 UI가 업데이트되는 것을 보았습니다. 그렇다면 이것은 정확히 어떻게 동작하는 걸까요?
+
+이 질문은 리액트의 핵심을 정확히 짚습니다. 이 라이브러리의 이름은 상태 변화에 반응하는 방식때문에 이런 이름이 붙었으니까요!
+
+이 질문은 리액트가 어떻게 동작하는지에 대한 개념적 모델을 정립해 나가는 과정에서 계속 다루게 될 질문입니다. 하지만 먼저 이 질문에 대한 답을 찾아볼 수 있을지 살펴보겠습니다.
+
+"counter" 예시를 다시 살펴보겠습니다.
+
+```jsx
+function Counter() {
+  const [count, setCount] = useState(0);
+
+  return <button onClick={() => setCount(count + 1)}>Value: {count}</button>;
+}
+```
+
+간단한 복습차원에서 이 컴포넌트가 최초 렌더링될 때 어떤일이 일어나는지 살펴보겠습니다.
+
+`Counter` 컴포넌트는 JSX를 반환하는 함수입니다. 순수한 자바스크립트로 변환하여 어떤일이 일어나는지 살펴보겠습니다.
+
+```js
+function Counter() {
+  const [count, setCount] = useState(0);
+
+  return React.createElement(
+    'button',
+    { onClick: () => setCount(count + 1) },
+    'Value: ',
+    count,
+  );
+}
+```
+
+위 코드를 실행시키면, `React.createElement`는 순수한 자바스크립트 객체인 리액트 요소를 생성하며 아래와 같이 생겼습니다.
+
+```
+{
+    type: "button",
+    key: null,
+    ref: null,
+    props: {
+        onClick: () => setCount(count + 1),
+        children: "Value: 0",
+    },
+    _owner: null,
+    _store: { validated: false },
+}
+```
+
+앞에서 살펴봤듯이 리액트 요소는 우리가 원하는 UI에 대한 설명서입니다. 이 경우 "Value: 0" 이라는 텍스트를 가진 버튼에 대한 설명서입니다.
+
+이 자바스크립트 객체를 아래의 HTML 요소로 시각화할 수 있습니다.
+
+```html
+<button>Value: 0</button>
+```
+
+자바스크립트 객체인 리액트 요소는 DOM의 구조를 설명합니다. 리액트는 이 설명서를 가지고 실제 DOM으로 변환합니다. `button` DOM 노드를 생성하고 페이지에 붙입니다.
+
+위의 간단한 스케치에서는 `onClick` 핸들러를 추가하지 않았지만, 핸들러 추가는 이 단계에서 중요한 부분입니다.
+리액트가 `button` DOM 노드를 생성하고 삽입할 때, 핸들러 함수도 추가합니다.
+
+이제 버튼을 클릭했을때 어떤 일이 일어나는지 살펴보겠습니다.
+
+`setCount` 함수가 호출되고 이 함수에 새로운 값을 전달합니다. `count`는 0에서 1로 증가합니다.
+
+상태값이 업데이트될 때마다 재렌더링(re-render)을 발생시킵니다. 리액트는 `Counter` 컴포넌트를 다시 한번 호출합니다.
+이 단계에서 새로운 UI에 대한 설명서인 새로운 리액트 요소가 생성됩니다.
+
+새로운 리액트 요소는 아래의 DOM 구조를 설명합니다.
+
+```html
+<button>Value: 1</button>
+```
+
+(이해하기 쉽도록 HTML 형식으로 보여드리지만, 실제로는 리액트가 자바스크립트 객체를 다룹니다.)
+
+각각의 렌더링은 스냅샷을 찍는것과 유사합니다. 컴포넌트의 prop와 state에 따라 UI가 어떻게 생겨야하는지를 묘사하는 설명서를 생성합니다.
+마치 특정 시점을 포착한 사진과 같습니다.
+
+이제 리액트는 두개의 스냅샷을 가집니다.
+
+<div style={{display: 'flex', gap: '1rem'}}>
+<div style={{flex: 1, minWidth: 0}}>
+
+**첫 번째 렌더링:**
+
+```html
+<button>Value: 0</button>
+```
+
+</div>
+<div style={{flex: 1, minWidth: 0}}>
+
+**두 번째 렌더링:**
+
+```html
+<button>Value: 1</button>
+```
+
+</div>
+</div>
+
+사용자가 버튼을 클릭하면, 두번째 스냅샷이 생성됩니다. 리액트는 이제 두번째 스냅샷을 반영하기 위해 어떻게 DOM을 업데이트할 것인지를 결정해야 합니다.
+
+리액트는 일종의 "틀린 그림 찾기"를 하게됩니다. 두개의 스냅샷 사이에 다른점을 찾아내야 합니다.
+
+이 과정을 *reconciliation*이라고 합니다. 최적화된 멋진 알고리즘을 사용해 리액트는 변경된 부분을 찾아냅니다. 이 단계에서 버튼의 텍스트가 "Value: 0"에서 "Value: 1"로 변경되었음을 알아차릴 수 있습니다.
+
+리액트가 무엇이 달라졌는지를 알아내면, 변경된 부분을 _commit_ 해야 합니다. 정밀하게 DOM을 업데이트하며, 수정이 필요한 부분만 수정합니다.
+
+이 경우 아래와 같은 연산이 발생할 것입니다.
+
+```js
+button.innerText = 'Value: 1';
+```
+
+지금까지 리액트의 핵심 동작 흐름을 살펴봤습니다. 이 과정을 아래와 같이 시각화 할 수 있습니다.
+
+<ReactLifecycleDiagram />
+
+## 🌃 Rendering vs Painting
+
+[Blender](https://www.blender.org/)로 3D 모델링을 한다고 가정해보겠습니다.
+
+Blender에서는 최종 3D 이미지를 생성하기 위해 프로젝트를 _render_ 할 수 있습니다.
+
+"Render"라는 용어는 일반적으로 가공되지 않은 데이터를 받아 사용할 수 있는 최종 결과물을 생성하는 것을 의미합니다.
+
+웹 프레임워크에서도 이 정의는 꽤 일관됩니다. 예를 들어, express에서 요청은 HTML 템플릿을 렌더링할 때 종료됩니다.
+
+```js
+app.get('/user/profile', (req, res) => {
+  const user = database.get(req.query.userId);
+
+  return res.render('profile', { name: user.name });
+});
+```
+
+하지만 리액트에서 "render" 용어는 약간 다릅니다. 리액트 관련 혼란의 상당 부분이 이 용어의 오해에서 비롯된다고 생각합니다.
+
+아래의 컴포넌트가 있다고 가정해보겠습니다.
+
+```jsx
+function AgeLimit({ age }) {
+  if (age < 18) {
+    return <p>You are not old enough!</p>;
+  }
+
+  return <p>Hello, adult!</p>;
+}
+```
+
+`AgeLimit` 컴포넌트는 `age` prop을 확인하여 둘중 하나의 paragraph를 반환합니다.
+
+이제, 이 컴포넌트를 재렌더링 한다고 가정해보겠습니다. 그럼 아래와 같은 두개의 스냅샷이 만들어집니다.
+
+<div style={{display: 'flex', gap: '1rem'}}>
+<div style={{flex: 1, minWidth: 0}}>
+
+**첫 번째 스냅샷:**
+
+```
+age: 16
+
+{
+  type: 'p',
+  key: null,
+  ref: null,
+  props: {},
+  children: "You're not old enough!",
+}
+```
+
+</div>
+<div style={{flex: 1, minWidth: 0}}>
+
+**두 번째 스냅샷:**
+
+```
+age: 17
+
+{
+  type: 'p',
+  key: null,
+  ref: null,
+  props: {},
+  children: "You're not old enough!",
+}
+```
+
+</div>
+</div>
+
+두 케이스 모두 `age`는 18보다 작기때문에 정확히 같은 UI가 나타납니다. 따라서 DOM 변경은 발생하지 않습니다.
+
+따라서 컴포넌트를 재렌더링한다는 것이 만드시 DOM을 업데이트 한다는 의미가 아닙니다. **렌더링은 리액트가 변경사항이 있는지를 확인하고, 스냅샷간의 차이가 있다면 최소의 변경으로 업데이트 하는 과정입니다**.
+
+만약 리액트가 DOM을 변경해야 한다면, 브라우저는 re-paint를 해야합니다. Re-paint는 DOM의 변경으로 인해 화면상의 픽셀을 다시 그려야할 때 발생합니다.
+이 과정은 DOM이 자바스크립트(리액트, 앵귤러, jQuery 등등)에 의해 변경되면 브라우저가 자동으로 수행합니다.
+
+요약하자면 다음과 같습니다.
+
+1. 리렌더링은 리액트가 변경사항이 있는지를 확인하는 과정입니다. ("reconciliation"이라고도 합니다.)
+2. 만약 두개의 스냅샷간의 차이가 있다면 리액트는 최신 스냅샷으로 DOM을 업데이트 하기위해 변경사항들을 "commit" 합니다.
+3. DOM 노드가 변경될 때마다 브라우저는 re-paint과정을 통해 수정된 픽셀을 다시 그려 사용자가 올바른 UI를 볼 수 있게 합니다.
+4. 모든 리렌더링 과정이 re-paint가 필요한것은 아닙니다. 스냅샷간의 차이가 없다면 리액트는 DOM 노드를 변경하지 않고 re-paint도 일어나지 않스빈다.
+
+중요한것은 리렌더링을 이야기할 때 현재의 UI를 모두 버리고 처음부터 다시 만들어야 함을 의미하지 않는다는 것 입니다.
+
+리액트는 re-paint를 최소화하려고 합니다. Re-paint가 비용이 많이 드는 작업이기 때문입니다.
+새로운 DOM 노드 여러개를 처음부터 생성하는것 대신에(수많은 re-painting 발생), 스냅샷간의 변경점을 찾아내 최소한의 변경을 수행합니다.
+
+:::info 추가적인 참고자료
+리액트 공식 문서에서 [Render와 Commit](https://react.dev/learn/render-and-commit)을 자세히 설명하고 있습니다.
+:::
+
+## 🌃 비동기 업데이트
+
+이제 개발자들이 자주 마주하는 문제를 살펴보겠습니다.
+
+아래의 코드를 살펴보겠습니다. 처음 버튼을 눌렀을 때 콘솔에 어떤게 출력될지 예상해보세요.
+
+```jsx
+function App() {
+  const [count, setCount] = useState(0);
+
+  return (
+    <>
+      <p>You have clicked {count} times.</p>
+      <button
+        onClick={() => {
+          setCount(count + 1);
+          console.log(count);
+        }}
+      >
+        Click me
+      </button>
+    </>
+  );
+}
+```
+
+콘솔에는 `0`이 출력됩니다.
+
+정말 이상하죠?
+
+상태 변수를 생성할 때 초기값을 `0`으로 설정했습니다. 그런다음 버튼을 클릭할 때 `1`로 증가합니다. 그렇다면 `0`이 아니라 `1`이 출력되야 하는거 아닐까요?
+
+하지만 문제는 setter 함수가 바로 반응하지 않는다는 점입니다.
+
+`setCount` 함수를 호출할 때, 리액트에게 상태 변수를 변경하라고 요청합니다. 리액트는 바로 모든것을 버리지 않습니다.
+현재의 작업(클릭 이벤트)이 완전히 끝나기를 기다렸다가 값을 업데이트하고 재렌더링을 트리거 합니다.
+
+지금으로서는 상태 변수의 업데이트가 비동기적으로 이루어진다는 점을 아는것이 중요합니다. 이는 다음 렌더링 시의 상태에 영향을 미칩니다.
+
+아래는 새로운 상태 값에 바로 접근할 수 있는 방법을 나타낸 코드입니다.
+
+```jsx
+function App() {
+  const [count, setCount] = useState(0);
+
+  return (
+    <>
+      <p>You have clicked {count} times.</p>
+      <button
+        onClick={() => {
+          const newCount = count + 1;
+          setCount(newCount);
+          console.log(newCount);
+        }}
+      >
+        Click me
+      </button>
+    </>
+  );
+}
+```
+
+표현식을 `setCount(count + 1)`과 같이 setter 함수에 직접 전달하는 대신에 변수에 값을 저장하면 됩니다.
+이렇게 하면 변수를 `console.log`문에서 사용할 수 있고 `onClick` 핸들러 안 어디서든 사용할 수 있습니다.
+
+저는 `nextCount`나 `nextUser`처럼 "next" 접두사를 붙이는걸 선호합니다. 다음 렌더링시에 사용될 값이라는 의미가 명확히 전달되기 때문입니다.
+
+### 🎆 왜 이런식으로 동작하는 걸까요?
+
+이것이 흔한 문제점이라는걸 고려할 때 왜 이런식으로 설계되었는지 의문을 가질 만합니다. 리액트가 상태 변수를 즉시 업데이트한다면 더 간단하지 않을까요?
+
+아래의 코드를 살펴보겠습니다.
+
+```jsx live
+function App() {
+  const [user, setUser] = useState({ name: 'Alyssa' });
+  const [status, setStatus] = useState('ready');
+  const [confirmationMessage, setConfirmationMessage] = useState();
+
+  if (!user) {
+    return <p>{confirmationMessage}</p>;
+  }
+
+  return (
+    <button
+      onClick={() => {
+        setUser(null);
+        setStatus('initial');
+        setConfirmationMessage('You have been logged out.');
+      }}
+    >
+      Log Out
+    </button>
+  );
+}
+```
+
+사용자가 "Log Out" 버튼을 누르면 아래와 같은 일이 일어납니다.
+
+1. `setUser` 함수가 호출되면 리액트는 이를 기억하고 할일로 기록해둡니다. `user`가 `null`로 변경될 것입니다.
+2. 그 다음에 `setStatus` 함수가 호출됩니다. 리액트는 다음 렌더링에 두개의 상태 변수가 변경되어야 함을 기록해둡니다.
+3. 마지막으로 `setConfirmationMessage` 함수가 호출됩니다. 리액트는 3개의 상태 변수가 변경되어야 한다고 기록해둡니다.
+
+`onClick` 함수가 완료되면 리액트는 [리액트의 핵심 동작 흐름](#-리액트의-핵심-동작-흐름)에서 살펴보았던 과정을 수행합니다.
+`App` 함수가 호출되고 `user` 값이 `null`로 초기화됩니다. 그리고 paragraph가 반환되며 리액트는 `button` DOM 노드를 지우고 새로운 `<p>` DOM 노드를 생성하면서 리렌더링을 마칩니다.
+
+이제 상태 업데이트가 동기적으로 발생한다고 생각해보겠습니다.
+
+사용자가 버튼을 클릭할 때, 클릭 핸들러는 호출되며 `setUser(null)`이 실행됩니다. 리액트는 즉시 리렌더링을 수행하고 앞에서 살펴보았던 단계를 거칩니다.
+`App` 함수를 재호출하고 반환값을 얻으며 버튼을 없애고 paragraph를 생성합니다.
+
+이 모든 과정을 거친 후에 다시 `onClick` 핸들러로 돌아와 작업을 재개합니다. 그리고 즉시 `status` 변수가 트리거한 또다른 재렌더링을 수행합니다.
+그 다음에 `confirmationMessage`에 대한 재렌더링이 수행됩니다.
+
+리액트에게 3배 많은 작업을 수행하게했고, 이는 3배 더 오래걸립니다. 따라서 이는 성능 저하를 초래할 뿐만 아니라, 일관성이 없거나 동작하지 않는 UI로 이어질 수 있습니다.
+
+예를 들어,첫번째 `setUser` 호출 후에 재렌더링이 발생하면 `user`는 `null`이 되지만 `confirmationMessage`는 여전히 `undefined`입니다. 따라서 아래와 같은 JSX를 얻습니다.
+
+```jsx
+<p>{undefined}</p>
+```
+
+업데이트가 비동기이기 때문에 *배치 처리*가 가능합니다. 리액트는 업데이트 작업을 스케쥴링하고 있다가 현재의 작업(실제로 보통 1~2밀리초 이내에 이루어지기 때문에 즉각적이라고 느낍니다.)이 끝나면 작업을 시작합니다.
