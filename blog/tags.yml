@@ -23,6 +23,11 @@ react:
   permalink: /react
   description: React tag description
 
+learning-react:
+  label: Learning React
+  permalink: /learning-react
+  description: Learning React tag description
+
 vue:
   label: Vue
   permalink: /vue
