@@ -1,0 +1,477 @@
+---
+slug: forms
+title: 리액트에서 form 다루기
+tags: [react, learning-react]
+unlisted: true
+---
+
+이 문서는 색인되지 않습니다.
+
+{/* truncate */}
+
+Form은 프론트엔드 개발에서 가장 까다로운 요소중 하나입니다. 대부분의 개발자들이 개발하기 싫어하는 기능입니다.
+
+하지만 form은 매우 중요합니다! 어디에나 있습니다. 세계에서 가장 유명한 웹 사이트인 구글도 form이라 할 수 있습니다.
+
+리액트의 생태계는 매우 거대하기 때문에 form을 쉽게 다룰 수 있는 많은 라이브러리들이 존재합니다. 하지만 대부분의 경우 라이브러리를 사용할 필요가 없습니다.
+Form은 사실 리액트에서 구현하기 어렵지 않습니다!
+
+이 글에서 form 인풋과 데이터를 바인딩하는 방법을 살펴보겠습니다. 그리고 더 복잡한 폼을 보다 쉽게 구현하는 방법을 알아보겠습니다.
+
+## 🌃 데이터 바인딩
+
+웹 애플리케이션을 구현할 때, 상태와 특정한 form 인풋을 동기화해야하는 상황이 자주 있습니다. 예를 들어, "username" 필드는 `username` 상태 변수 값에 바인딩되어야 합니다.
+
+이런 작업을 "data binding"이라고 합니다. 대부분의 프론트엔드 프레임워크는 상태와 form 제어를 연결해주는 수단을 제공합니다.
+
+아래의 예시는 리액트에서 form을 제어하는 방식입니다.
+
+```jsx live
+function SearchForm() {
+  const [searchTerm, setSearchTerm] = useState('cats');
+
+  return (
+    <>
+      <form>
+        <label htmlFor="search-input">Search:</label>
+        <input
+          type="text"
+          id="search-input"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+      </form>
+      <p>Searching for: {searchTerm}</p>
+    </>
+  );
+}
+```
+
+위 코드에서 만약 `value`나 `onChange` 속성을 바꾸면 어떤일이 일어날까요?
+
+`value` 속성은 HTML과 리액트에서 다르게 동작합니다.  
+HTML에서 `value`는 기본값을 설정하며 수정할 수 있습니다. 하지만 리액트에서 `value`는 특정값으로 인풋값을 고정하기 때문에 수정할 수 없습니다.
+
+`value` 속성을 `searchTerm` 상태 변수와 같게 설정함으로써, 인풋이 항상 search term을 보여주도록 합니다.
+만약 search term의 값을 랜덤한 값으로 설정하는 버튼을 추가하고 클릭한다면, 인풋은 새로운 값으로 업데이트 될 것입니다.
+
+input 태그 `onChange` 핸들러에 `console.log`를 출력하도록 설정하고 인풋을 입력하면 콘솔에 새로운 값이 입력됩니다.
+하지만 리액트는 change 이벤트가 발생한 직후, 브라우저가 화면을 한 번 더 그리는 작업을 완료하기도 전에 변경사항을 다시 되돌립니다.
+
+input 태그의 현재 값을 사용하여 `setSearchTerm` 함수를 호출하면 해당 값을 유지할 수 있습니다. 리액트가 재렌더링될 때 인풋의 값은 업데이트된 상태값으로 업데이트 됩니다.
+
+정말 `value`값이 필요할까요? onChange 리스너만 있어도 동작하는거 같은데요!  
+사실, 이것을 단방향(one-way) 바인딩이라고 합니다. 인풋은 상태를 업데이트할 수 있지만, 상태는 인풋값을 업데이트 할 수 없습니다.
+만약 난수 생성 버튼을 누르면 상태는 새로운 숫자로 업데이트되지만 인풋값은 업데이트되지 않습니다.
+비슷하게 초기값을 `cats`으로 설정했지만 `value={searchTerm}`을 설정하지 않으면 해당값은 보이지 않습니다.
+
+:::info Synthetic events
+리액트는 "synthetic" 이벤트 시스템을 사용합니다. 이 이벤트는 자바스크립트의 표준 이벤트가 아니라 리액트에 의해 생성된 특별한 객체입니다.
+
+왜 리액트는 새로운 이벤트를 생성할까요? 몇가지 이유가 있습니다.
+
+1. 일관성을 보장할 수 있습니다. 브라우저마다 미묘하게 다르게 구현된 이벤트의 예외 케이스를 제거하여 동작의 일관성을 유지할 수 있습니다.
+2. 부가적인 정보를 포함하여 DX를 향상시킵니다.
+3. 이전 버전에서는 이 이벤트 시스템이 성능에 긍정적인 영향을 미치기도 했습니다. 온라인에서 "이벤트 풀링"이나 `event.persist()`라는 용어를 봐도 무시하면 됩니다. 이 시스템은 리액트 17버전에서 제거되었기 때문입니다.
+
+만약 진짜 이벤트 객체에 접근하고 싶다면 아래처럼 하면 됩니다.
+
+```jsx
+<input
+  onChange={(e) => {
+    const realEvent = e.nativeEvent;
+    console.log(realEvent);
+  }}
+/>
+```
+
+만약 이벤트에대해 더 자세히 알고 싶다면 [공식문서](https://react.dev/reference/react-dom/components/common#react-event-object)를 확인해보세요.
+:::
+
+### 🎆 제어 vs. 비제어 인풋
+
+Form 인풋에게 `value` 속성을 전달하면, 해당 컴포넌트는 <em>제어 인풋(controlled input)</em>이 됩니다. 제어 인풋의 의미는 말그대로 리액트가 인풋을 제어한다는 뜻입니다.
+
+이와 반대로, `value` 속성을 전달하지 않는다면, 그 인풋은 <em>비제어 인풋(uncontrolled input)</em>이 됩니다. 비제어 인풋의 의미는 리액트가 인풋을 제어하지 않는다는 뜻입니다.
+
+인풋은 제어도 될 수 있고 비제어도 될 수 있습니다. 하지만 리액트는 요소의 타입이 전환되는것을 좋아하지 않습니다.
+
+이는 오류로 이어질 수 있습니다. 아래 코드를 살펴보겠습니다.
+
+```jsx live
+function SignupForm() {
+  // no default value
+  const [username, setUsername] = useState();
+
+  return (
+    <form>
+      <label htmlFor="username">Select a username:</label>
+      <input
+        type="text"
+        id="username"
+        value={username}
+        onChange={(e) => setUsername(e.target.value)}
+      />
+    </form>
+  );
+}
+```
+
+input 태그에 텍스트를 입력해보세요. 그리고 콘솔을 확인해보면 아래의 경고문이 출력됩니다.
+
+:::danger
+Warning: A component is changing an uncontrolled input to be controlled.
+:::
+
+좀 이상합니다. input 태그는 제어되고 있습니다. `value={username}`을 초기 렌더링시에 설정해줬거든요!
+
+문제는 `username`가 초기에 undefined로 설정이 되어 상태 hook에 기본값이 전달되지 않았습니다.
+아래는 우리가 하려는것을 단순화한 코드입니다.
+
+```jsx
+const username = undefined;
+
+<input
+  type="text"
+  id="username"
+  value={username}
+  onChange={(event) => {
+    setUsername(event.target.value);
+  }}
+/>;
+```
+
+`value`를 `undefined`로 설정하면, 아무것도 설정하지 않은것과 같습니다. 따라서 리액트는 인풋을 *비제어 인풋*으로 간주합니다.
+
+사용자가 input 태그에 값을 입력하면 `onChange` 이벤트는 `username`의 값을 `undefined`에서 문자열로 업데이트 합니다. 따라서 리액트는 요소를 *제어 인풋*으로 전환하게 되고 이로 인해 오류가 발생합니다.
+
+문제를 해결하기 위해서는 정의된 `value`를 전달해야 합니다. 이 경우에 `username`에 빈 문자열을 넘겨주면 됩니다.
+
+```
+// 🚫 Incorrect. `username` will flip from `undefined` to a string:
+const [username, setUsername] = useState('');
+
+// ✅ Correct. `username` will always be a string:
+const [username, setUsername] = useState('')
+```
+
+이렇게 바꾸면, 정의된 값을 넘겨줬기 때문에 최초 렌더링시에 인풋이 제어 컴포넌트가 됩니다.
+빈문자열이 falsy한 값이지만 제어 인풋을 판단할 때에는 괜찮습니다.
+
+:::warning React 19에서의 Actions
+React 19에서는 form을 제어하기 위해 *Actions*이라는 개념을 도입했습니다. 아래는 예시입니다.
+
+```jsx
+function ContactForm() {
+  const [error, submitACtion, isPending] = useActionState(
+    async (previousState, formData) => {
+      const name = formData.get('name');
+      const msg = formData.get('message');
+
+      const error = await sendMessage(name, msg);
+
+      if (error) {
+        return error;
+      }
+
+      redirect('/path');
+      return null;
+    },
+    null,
+  );
+
+  return (
+    <form action={submitAction}>
+      <input type="text" name="name" />
+      <textarea name="message" />
+      <button type="submit" disabled={isPending}>
+        Update
+      </button>
+      {error && <p>{error}</p>}
+    </form>
+  );
+}
+```
+
+Actions를 사용하면 제어 인풋을 사용하지 않아도 됩니다. 데이터 바인딩이 없는 대신에, 리액트는 form이 제출될 때 모든 인풋의 정보를 모읍니다.
+그런다음에 이 데이터로 원하는 작업을 수행할 수 있습니다.
+
+이 방법의 장접은 모든 필드마다 상태값을 설정해주지 않아도 되기 때문에 덜 번거롭다는 점입니다. 필드가 많은 긴 form의 경우 이 방법은 시간을 절약해줍니다.
+Actions는 낙관적 업데이트(서버에서 변경이 일어나기전에 UI를 미리 업데이트 하는 방법)를 지원하는 추가적인 추상화 도구를 제공합니다.
+
+하지만 Actions는 form과 관련된 모든 문제를 해결해주지 않습니다. 처음 살펴봤던 예시를 떠올려보겠습니다.
+예시에서 user의 searchTerm을 실시간으로 form 아래에 보여줬습니다.
+
+하지만 Actions는 form 데이터가 제출될 때에만 접근할 수 있습니다. Form 데이터가 제출되기 전에 무언가를 하고 싶다면 상태에 저장해야 합니다.
+이 경우에는 제어 인풋을 사용해야 합니다.
+:::
+
+## 🌃 onClick 핸들러 살펴보기
+
+많은 리액트 개발자가 저지르는 흔한 실수가 있습니다. 이번 섹션에서는 이를 살펴보겠습니다.
+
+검색 form을 구현한다고 가정해보겠습니다.
+
+```jsx live
+function SearchForm({ runSearch }) {
+  const [searchTerm, setSearchTerm] = useState('');
+
+  return (
+    <div className="search-form">
+      <input
+        type="text"
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+      />
+      <button>Search</button>
+    </div>
+  );
+}
+```
+
+위 예시에서 `runSearch` 함수는 사용자가 "Search" 버튼을 눌렀을 때 호출하려고 합니다.
+
+여기서 한가지 궁금증이 생깁니다. 어떻게 이 함수를 사용할 수 있을까요?
+
+많은 개발자들이 직관적으로 제출 버튼에 `onClick` 핸들러를 추가해서 해결하려고 합니다.
+
+```jsx
+<button onClick={() => runSearch(searchTerm)}>Search</button>
+```
+
+하지만 이 방법에 많은 문제가 있습니다. 예를 들어, 만약 사용자가 텍스트를 입력한 후 "Enter"를 눌러 검색한다면 어덯게 될까요?
+
+글쎄요... `onKeyDown` 이벤트 핸들러를 추가하여 이 문제를 해결할 수 있을까요?
+
+```jsx
+<input
+  type="text"
+  value={searchTerm}
+  onChange={(e) => setSearchTerm(e.target.value)}
+  onKeyDown={(e) => {
+    if (e.key === 'Enter') {
+      runSearch(searchTerm);
+    }
+  }}
+/>
+```
+
+이 방법은 잘못된 방향입니다. 브라우저가 이미 알고 있는걸 다시 개발하고 있잖아요!
+
+### 🎆 form 사용하기
+
+이 문제를 포함한 여러 문제를 해결하기 위해 `<form>` 태그로 감싸 form을 제어해야 합니다.
+
+그런다음, 클릭이나 키 이벤트를 리스닝하는 대신에 *form*의 *submit event*를 리스닝하면 됩니다.
+
+코드가 얼마나 간단해 지는지 살펴보세요.
+
+```jsx
+function SearchForm({ runSearch }) {
+  const [searchTerm, setSearchTerm] = React.useState('');
+
+  return (
+    <form
+      className="search-form"
+      onSubmit={(event) => {
+        event.preventDefault();
+        runSearch(searchTerm);
+      }}
+    >
+      <input
+        type="text"
+        value={searchTerm}
+        onChange={(event) => {
+          setSearchTerm(event.target.value);
+        }}
+      />
+      <button>Search!</button>
+    </form>
+  );
+}
+```
+
+Form의 submit 이벤트는 버튼을 클릭하거나, 인풋이나 버튼에 포커싱되어 있을 때 "엔터"키를 누르면 트리거 됩니다.
+이벤트가 트리거되면, 검색을 수행합니다.
+
+표준 웹 플랫폼 기능을 다시 만들기보다는, 플랫폼의 기능을 활용해서 이 문제를 해결해야 합니다.
+
+Form submit 이벤트를 활용하면 client-side의 유효성 검사를 수행할 수 있습니다.
+
+```html
+<input type="password" required="{true}" minlength="{8}" />
+```
+
+### 🎆 Form의 기본 동작
+
+`onSubmit`을 사용할 때 주의사항이 있습니다. 기본 제출 동작을 방지해야 합니다.
+
+```jsx
+<form
+  className="search-form"
+  onSubmit={(event) => {
+    event.preventDefault();
+    runSearch(searchTerm);
+  }}
+/>
+```
+
+이게 필요한 이유를 알아보려면 client-side 요청이 없던 시절로 돌아가봐야 합니다. `fetch`나 `XMLHttpRequest`나 JSON이 없던 시절 말입니다.
+
+검색 결과를 가져오는 것처럼 서버에 요청을 보낼 때, 데이터만 단독으로 요청할 수는 없었습니다. 새로운 HTML 전체를 요청해야 했습니다.
+기본적으로 사용자가 새 URL로 이동하면, 서버는 요청과 함께 전송된 데이터를 사용하여 HTML을 렌더링합니다.
+
+Form은 아직 이 동작이 기본입니다. Form을 제출할 때, 브라우저는 사용자를 `action` 속성에 지정된 URL로 리다이렉션 시킵니다.
+
+```html
+<form method="POST" action="/search"></form>
+```
+
+만약 `action` 속성이 없다면 브라우저는 현재의 URL을 사용하여 페이지를 새로고침합니다.
+
+현대의 리액트 애플리케이션에서 이는 바람직하지 않은 동작입니다. 전체 페이지를 다시 로딩하지 않고, 최소한의 데이터를 불러와 적은 수의 컴포넌트만 리렌더링하기를 원합니다.
+이는 빠르고 부드러운 UX와 이어집니다.
+
+그래서 `event.preventDefault()`를 호출하여 전체 페이지의 리로드를 방지해야 합니다.
+
+## 🌃 다른 form 요소제어
+
+텍스트 인풋과 더불어서 웹 플랫폼은 form을 제어하기 위한 추가적인 요소를 제공합니다.
+
+- Textareas
+- Radio buttons
+- Checkboxes
+- Selects
+- Ranges
+- Color pickers
+
+리액트가 아닌 환경에서 위 요소로 form을 제어해본적이 있다면, 요소들이 서로 너무달라 놀라거나/짜증났을 것입니다.
+
+예를 들어, textarea 요소는 현재의 값을 `value` props가 아닌 *children*으로 정의합니다.
+
+```html
+<textarea>
+    This is the current value
+</textarea>
+```
+
+또다른 예시로는 select 태그가 자식 태그인 `<option>`에 `selected` props를 사용해 선택된 값을 나타냅니다.
+
+```html
+<select>
+  <option value="a">Option 1</option>
+  <option value="b" selected>Option 2</option>
+  <option value="c">Option 3</option>
+</select>
+```
+
+한가지 좋은 소식은 리액트가 많은 form 요소들을 수정하여 서로 비슷하게 동작하도록 만들었습니다. 따라서 리액트에서 form 제어가 조금 쉬워졌습니다.
+
+기본적으로, 모든 form 제어는 동일한 패턴을 따릅니다.
+
+1. 현재의 값은 `value`(대부분의 인풋)나 `checked`(라디오 버튼과 체크박스)속성에 의해 읽기 전용으로 정의됩니다.
+2. 변경을 `onChange` 이벤트 리스너로 제어합니다.
+
+### 🎆 Select 요소
+
+`<select>` 요소는 사전에 정의된 여러 option들 중에 하나의 옵션을 선택하도록 하는 요소입니다.
+
+리액트에서 select 태그를 사용하는 것은 input 태그를 사용하는 것과 비슷합니다. `value`와 `onChange` 속성을 사용합니다.
+
+```jsx live
+function App() {
+  const [selectedOption, setSelectedOption] = useState('red');
+
+  return (
+    <form>
+      <fieldset>
+        <legend>What is your favorite color?</legend>
+
+        <select
+          value={selectedOption}
+          onChange={(e) => setSelectedOption(e.target.value)}
+        >
+          <option value="red">Red</option>
+          <option value="green">Green</option>
+          <option value="blue">Blue</option>
+        </select>
+      </fieldset>
+
+      <p>
+        Selected value:
+        <br />
+        {selectedOption}
+      </p>
+    </form>
+  );
+}
+```
+
+`value` props를 설정함으로써, 선택된 옵션에 리액트 상태를 연결해 해당 컴포넌트를 제어 컴포넌트로 만들었습니다.
+`onChange` 이벤트 리스너를 추가해서 다른 옵션을 선택할 때 상태가 변경되도록 합니다.
+
+사실 이런 동작은 form 요소의 기본동작과 비교해봤을 때 굉장한 개선입니다. `selected` 속성을 `<option>` 태그에 추가하는 번거로운 작업을 할 필요가 없습니다.
+대신에 모두 동일한 패턴을 적용할 수 있습니다.
+
+### 🎆 라디오 버튼
+
+Radio 버튼은 조금 특이합니다.
+
+겉보기에는 `<select>` 요소와 동일한 목적을 수행합니다. Radio 버튼은 여러 옵션 중에서 하나를 선택할 수 있도록 합니다.
+
+하지만 다른점은 상태가 서로 다른 독립적인 HTML 요소에 나누어져 있다는 점입니다. `<select>` 태그는 하나였지만 `<input type="radio">` 태그는 여러개 입니다.
+
+제어 radio 버튼 그룹의 예시를 살펴보겠습니다.
+
+```jsx live
+function App() {
+  const [value, setValue] = useState('apple');
+
+  return (
+    <form>
+      <fieldset>
+        <input
+          type="radio"
+          name="selected-to-terms"
+          id="agreed-yes"
+          value="yes"
+          checked={value === 'yes'}
+          onChange={(e) => setValue(e.target.value)}
+        />{' '}
+        <label htmlFor="agreed-yes">Yes</label>
+        <br />
+        <input
+          type="radio"
+          name="agreed-to-terms"
+          id="agreed-no"
+          value="no"
+          checked={value === 'no'}
+          onChange={(event) => {
+            setValue(event.target.value);
+          }}
+        />{' '}
+        <label htmlFor="agreed-no">No</label>
+      </fieldset>
+    </form>
+  );
+}
+```
+
+속성이 참 많은데 하나씩 살펴보겠습니다.
+
+1. `name`
+   브라우저는 각각의 버튼이 같은 그룹에 있다는 것을 알아야 합니다. 그래야 한번에 하나의 버튼만 선택이 가능합니다.
+   이는 `name` props로 설정할 수 있습니다. 같은 그룹에 있는 radio 버튼은 같은 `name`을 공유해야 합니다.
+
+2. `value`
+   각각의 radio 버튼은 고유한 value를 가지고 있습니다. 옵션이 선택되면 리액트의 상태는 이 값으로 복사가 됩니다.
+
+3. `id`
+   다른 form 제어 요소와 마찬가지로 `<label>` 태그를 올바른 input과 연결해 레이블을 클릭하면 해당 입력란에 포커스가 맞춰지도록 하기위해 필요합니다.
+
+4. `checked`
+   이 props는 radio 버튼과 리액트 상태를 연결하여 제어 컴포넌트로 만듭니다. 이 값은 boolean 값이여야 하며 선택됐을때 `true`로 선택되지 않았을 때 `false`로 설정됩니다.
+   한번에 하나의 radio 버튼만 `true`로 설정해야 합니다.
+
+살짝 달라보여도, 같은 원칙을 따릅니다. 옵션이 선택될 때를 포착하기 위해 `onChange` 이벤트를를 사용합니다. 옵션이 선택되면 리액트의 상태값을 변경합니다.
+
