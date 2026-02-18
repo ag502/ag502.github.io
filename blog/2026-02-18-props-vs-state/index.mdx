@@ -1,0 +1,104 @@
+---
+slug: props-vs-state
+title: Props Vs. State
+tags: [react, learning-react]
+unlisted: true
+---
+
+이 문서는 색인되지 않습니다.
+
+{/* truncate */}
+
+리액트를 공부하다 보면, "props"와 "state"의 개념이 헷갈릴 때가 있습니다. 정확히 두개의 차이가 뭘까요?
+언제 props를 사용하고 언제 state를 사용해야 할까요?
+
+이 글에서, 헷갈리는 부분을 살펴보고 정리해보겠습니다.
+
+## 🌃 Props
+
+"Props"는 "properties"의 줄임말입니다. 좀더 자세히 말하면, HTML 요소의 `class`나 `href`와 같은 속성들과 비슷합니다.
+
+```html
+<a href="https://www.google.com" class="link"> </a>
+```
+
+아래의 `Button` 컴포넌트는 "variant" prop을 받습니다. 이 prop은 HTML의 `class` 속성처럼 내부적으로 스타일을 제어합니다.
+
+```jsx
+function App() {
+  return (
+    <div className="box">
+      <Button variant="secondary">Cancel</Button>
+    </div>
+  );
+}
+```
+
+Props는 컴포넌트의 동작을 사용자화하여 같은 컴포넌트가 다른 상황에서 다르게 동작할 수 있도록 합니다.
+
+**Props는 함수에 전달되는 인자처럼 컴포넌트에 전달되는 입력값입니다**.
+
+## 🌃 State
+
+위에서 살펴본 예시는 정적입니다. 코드를 실행할 때마다 항상 같은 결과가 나옵니다.
+
+하지만 시간이 지남에 따라 변경을 시켜야하면 어떨까요? 그래서 상태라는 개념이 존재합니다.
+
+위의 예시를 변경해보겠습니다.
+
+```jsx
+function App() {
+  const [hasAgreed, setHasAgreed] = useState(false);
+
+  return (
+    <div className="box">
+      <p>Are you sure you want to continue?</p>
+      <label htmlFor="confirm-checkbox">
+        <span className="required">*</span>
+        <input
+          id="confirm-checkbox"
+          type="checkbox"
+          value={hasAgreed}
+          onChange={() => setHasAgreed(!hasAgreed)}
+        />
+        <span>
+          I agree with <a href="/terms">the terms</a>.
+        </span>
+      </label>
+      <div className="actions">
+        <Button variant="secondary" isEnabled={true}>
+          Cancel
+        </Button>
+        <Button variant="primary" isEnabled={hasAgreed}>
+          Confirm
+        </Button>
+      </div>
+    </div>
+  );
+}
+```
+
+`hasAgreed`라는 새로운 상태를 추가했고, 이 상태는 "Confirm" 버튼에 사용됩니다.
+여기서 props에 대한 중요한 사실이 드러납니다. Props는 데이터가 흐르는 통로의 역할을 합니다.
+
+위의 코드를 자세히 살펴보겠습니다.
+
+1. 리액트의 상태는 데이터의 변경을 추적합니다. 이 경우 사용자가 checkbox를 토글할 때마다 `hasAgreed` 상태가 true/false로 전환됩니다.
+2. 기본적으로, 상태는 *현재 컴포넌트*에서만 유효합니다. `Button` 컴포넌트는 `hasAgreed` 상태에 대해 알지 못합니다. 상태는 전역이 아니기 때문입니다.
+3. Props는 하나의 컴포넌트에서 다른 컴포넌트로 데이터를 전달하는 터널과 같습니다.
+4. Props로 정적인 값들(문자열, 숫자, 불리언)을 전달할 수도 있지만, 동적인 상태 변수를 전달할 수도 있습니다.
+
+:::info 적절한 prop 이름짓기
+Prop의 이름을 `isEnabled`로 짓기보다는 `disabled`로 짓는걸 더 선호합니다.
+
+```jsx
+function Button({ variant, disabled, children }) {
+  return (
+    <button disabled={disabled} className={variant}>
+      {children}
+    </button>
+  );
+}
+```
+
+:::

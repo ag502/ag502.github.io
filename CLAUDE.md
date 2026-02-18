@@ -67,6 +67,7 @@ pnpm deploy
 
 블로그 포스트는 다음과 같은 구조를 따릅니다:
 
+1. **생성 방법**: 먼저 `blog/YYYY-MM-DD-slug/` 폴더를 생성한 다음, 그 안에 `index.mdx` 파일을 추가합니다.
 1. **위치**: `blog/YYYY-MM-DD-slug/index.mdx`
 2. **Frontmatter** (필수):
    ```yaml
