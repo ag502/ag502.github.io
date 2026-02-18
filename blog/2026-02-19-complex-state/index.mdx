@@ -1,0 +1,183 @@
+---
+slug: complex-state
+title: 복잡한 상태 제어하기
+tags: [react, learning-react]
+unlisted: true
+---
+
+이 문서는 색인되지 않습니다.
+
+{/* truncate */}
+
+지금까지 리액트 상태로 숫자와 문자열만 저장했습니다. 하지만 실제 애플리케이션에서는 상태가 객체나 배열과 같이 훨씬 복잡합니다.
+
+[그라디언트 생성기](https://www.joshwcomeau.com/gradient-generator/)를 예시로 살펴보면, 사용자는 2개에서 최대 5개의 색상을 선택하여 그라디언트를 생성할 수 있습니다.
+이 경우 색상의 상태는 어떤 구조로 되어있을까요?
+
+아마도 아래처럼 배열로 관리되고 있을것입니다.
+
+```js
+const [colors, setColors] = useState(['#000000', '#ffffff']);
+```
+
+리액트는 상태가 어떤 타입인지 신경쓰지 않습니다. 숫자나 문자는 물론 배열이나 객체도 저장할 수 있습니다.
+심지어 함수도 저장할 수 있습니다!
+
+하지만 주의해야 할 점이 있습니다. 그것은 리액트의 상태가 반드시 불변(immutable)해야 한다는 것입니다.
+`setColors` 함수를 호출 했을 떄, 새로운 배열을 전달해야 합니다. 상태의 배열이나 객체를 변경하면 안됩니다!
+
+:::info 할당(Assignment)과 변경(Mutation)의 차이
+이 글에서는 "할당"과 "변경"의 차이를 아는것이 매우 중요합니다. [Assignment Vs. Mutation](https://courses.joshwcomeau.com/joy-of-react/10-javascript-primer/11-assignment-vs-mutation)을 참고하세요.
+:::
+
+## 🌃 Mutation(변경) 버그
+
+아래의 코드를 살펴보겠습니다.
+
+```jsx live
+function App() {
+  const [colors, setColors] = React.useState(['#FFD500', '#FF0040']);
+
+  const colorStops = colors.join(', ');
+  const backgroundImage = `linear-gradient(${colorStops})`;
+
+  return (
+    <>
+      <div
+        className="gradient-preview"
+        style={{
+          backgroundImage,
+        }}
+      />
+
+      <form>
+        {colors.map((color, index) => {
+          const colorId = `color-${index}`;
+
+          return (
+            <div key={colorId} className="color-row">
+              <label htmlFor={colorId}>Color {index + 1}:</label>
+              <input
+                id={colorId}
+                type="color"
+                value={color}
+                onChange={(event) => {
+                  colors[index] = event.target.value;
+                  setColors(colors);
+                }}
+              />
+            </div>
+          );
+        })}
+      </form>
+    </>
+  );
+}
+```
+
+위 코드는 제대로 동작하지 않습니다. 그 이유는 `colors` 배열을 직접 변경했기 때문입니다.
+
+이 문제를 해결하기 위해서는 새로운 배열을 생성하도록 `onChange` 함수를 수정해야 합니다.
+
+```jsx
+<input
+  id={colorId}
+  type="color"
+  value={color}
+  onChange={(event) => {
+    const nextColors = [...colors];
+    nextColors[index] = event.target.value;
+
+    setColors(nextColors);
+  }}
+/>
+```
+
+### 🎆 절대 리액트의 상태를 직접 변경하지 마세요
+
+위의 코드를 살펴보면 아래의 작업을 수행하고 있습니다.
+
+1. 새로운 배열 생성
+2. 새로운 배열을 변경
+3. 새로운 배열을 상태로 업데이트
+
+1번과 2번의 순서를 바꾸면 어떻게 될지 궁금할 수 있습니다. 배열을 먼저 변경한 후에 복사하면 어떻게 될까요? 아래처럼요.
+
+```jsx
+<input
+  id={colorId}
+  type="color"
+  value={color}
+  onChange={(event) => {
+    colors[index] = event.target.value;
+    setColors([...colors]);
+  }}
+/>
+```
+
+좀 더 간단해졌죠? 원하는 대로 수정하고 `setColors` 함수를 호출하기 직전에 배열을 복사합니다. 이렇게 하면 새로운 배열을 전달할 수 있습니다.
+
+문제는 이 방법이 리액트의 상태를 직접 수정했기 때문에 버그를 유발할 수 있다는 것입니다. 이 동작은 리액트가 의도한 동작이 아니며 이렇게 했을 때 리액트가 경고를 출력하지도 않습니다.
+
+지금은 괜찮았지만, 습관적으로 이렇게 하면 오류를 겪을 수 있습니다. 그리고 이 오류는 디버깅하기 어렵습니다.
+
+### 🎆 근데 조금 번거롭습니다.
+
+모든 변경사항마다 새로운 배열을 생성하는 방법은 비효율적이라는 생각이 듭니다. 이미 존재하는 배열을 변경하는게 성능면에서 훨씬 좋지 않나요?
+
+리액트 상태에서는 선택권이 없습니다. 상태 변경을 할 때마다 새로운 배열을 생성해야 합니다.
+
+다행이도 이는 이슈가 아닙니다. 배열을 복사하는것은 매우 빠릅니다.
+
+```jsx
+<input
+  id={colorId}
+  type="color"
+  value={color}
+  onChange={(event) => {
+    console.time('perf-check');
+
+    const nextColors = [...colors];
+    nextColors[index] = event.target.value;
+
+    console.timeEnd('perf-check');
+
+    setColors(nextColors);
+  }}
+/>
+```
+
+배열 복사에 걸리는 시간을 측정해보면 대략 0.02ms 입니다.
+
+최악의 경우을 만들어보겠습니다. 배열 복사를 1000번 수행해볼까요?
+
+```jsx
+<input
+  id={colorId}
+  type="color"
+  value={color}
+  onChange={(event) => {
+    console.time('perf-check');
+
+    let nextColors;
+    for (let i = 0; i < 1000; i++) {
+      nextColors = [...colors];
+      nextColors[index] = event.target.value;
+    }
+
+    console.timeEnd('perf-check');
+
+    setColors(nextColors);
+  }}
+/>
+```
+
+이 작업도 0.2ms ~ 0.3ms 정도 걸립니다. 원래대로라면 1000배 느려야 하는데 그렇지 않습니다. 아마도 브라우저가 이런 작업을 최적화하기 때문일 것입니다.
+
+혹시 이런 수치가 성능이 좋은 기기에서만 나타나는 것은 아닐까요? 실제로 저사양 기기에서 테스트를 해보니 2ms로 측정이 되었습니다.
+
+이 수치를 이해하기 쉽게 설명하자면, 사람의 평균 눈 깜빡임 시간은 약 100ms 입니다. 어떤일이 100ms 이하로 걸리면 우리는 그것을 순식간이라고 인지합니다.
+따라서 실제로 필요한거 보다 1000배 더 많은 일을 하더라도 체감할 수 있는 시간에는 한참 못 미칩니다.
+
+솔직히 말하면 배열의 크기에 따라 달라집니다. 배열에 100만개의 아이템이 있다면 이야기가 달라집니다.
+하지만 일반적으로 프론트엔드에서 그렇게 많은 데이터를 처리하지 않습니다. 거대한 크기의 데이터를 서버에서 불러올 때 시간이 많이 걸리기 때문입니다. 더욱이 저사양의 기기에서는 많은 데이터를 처리할 메모리가 없습니다.
