@@ -177,6 +177,23 @@ function Clock() {
 
 **주의**: `minWidth: 0`을 반드시 포함해야 횡스크롤이 생기지 않습니다.
 
+### 섹션 요약 드롭다운
+
+"섹션 요약해줘"라고 요청하면, 각 `##` 섹션의 끝에 `<details>` 드롭다운으로 요약을 추가합니다:
+
+```mdx
+<details>
+<summary>섹션 요약</summary>
+
+- 핵심 내용 1
+- 핵심 내용 2
+- 핵심 내용 3
+
+</details>
+```
+
+**주의**: `<details>` 태그 전후로 빈 줄이 있어야 MDX에서 올바르게 렌더링됩니다. `<summary>` 뒤와 `</details>` 앞에도 빈 줄이 필요합니다.
+
 ## Docusaurus 설정
 
 `docusaurus.config.ts`의 주요 설정:
