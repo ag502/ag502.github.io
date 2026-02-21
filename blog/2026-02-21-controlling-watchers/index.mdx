@@ -1,0 +1,291 @@
+---
+slug: controlling-watchers
+title: Watcher 제어하기 - Pausing, Resuming, Stopping
+tags: [secret-vue, vue, vue-reactivity]
+unlisted: true
+---
+
+이 문서는 색인되지 않습니다.
+{/* truncate */}
+
+## 🌃 Watcher 일시 정지, 재개하기
+
+조건이 충족되지 않을 때 일시적으로 watcher를 비활성화 할 필요가 있습니다. 조건이 바뀌면 언제든 다시 활성화 할 수 있습니다.
+
+Vue는 watcher를 일시정지 하거나 재개하는 기능을 제공합니다. 이는 오프라인/온라인 상태에서나 로딩 상태일 때 사용하기 적절합니다.
+
+### 🎆 항상 활성화된 watcher의 문제점
+
+```js
+import { ref, watch } from '@vue/reactivity';
+
+const doc = ref('');
+const isOnline = ref(true);
+
+function saveDoc(text) {
+  console.log('Saved:', text);
+}
+
+// 이 watcher는 항상 실행됩니다. 심지어 오프라인 환경에서도요.
+watch(doc, saveDoc);
+
+// offline 상태로 변경 및 편집
+async function demo() {
+  doc.value = 'initial content'; // Saved
+
+  isOnline.value = false; // offline 전환
+  doc.value = 'offline edit'; // Saved (offline 환경에서는 저장되면 않됨)
+
+  isOnline.value = true; // online 전환
+  doc.value = 'online edit'; // Saved
+}
+```
+
+문제는 watcher가 오프라인 상태에서도 실행된다는 점입니다. 오프라인 환경에서는 저장이 실패할 것이기 때문에 실행되면 안됩니다.
+
+### 🎆 일시 정지, 재개 기능 사용하기
+
+Watcher는 동작을 제어하는 함수를 제공합니다.
+
+```js
+import { ref, watch } from '@vue/reactivity';
+
+const doc = ref('');
+const isOnline = ref(true);
+
+function saveDoc(text) {
+  console.log('Saved:', text);
+}
+
+// Watcher로 부터 반환된 동작제어 함수
+const { pause, resume } = watch(doc, saveDoc);
+
+watch(isOnline, (online) => {
+  if (online) {
+    resume();
+  } else {
+    pause();
+  }
+});
+```
+
+이제 자동저장 watcher는 오프라인 상태일때 자동으로 일시 정지되고 온라인으로 전환될 때 다시 재개됩니다.
+
+위 코드를 아래처럼 간단히 작성할 수도 있습니다.
+
+```js
+watch(isOnline, (online) => (online ? resume() : pause()));
+```
+
+코드를 실행한 결과는 다음과 같습니다.
+
+```
+--- Testing autosave ---
+Saved: initial content
+Saved: edit 1
+
+--- Going offline ---
+Made edit while offline - queued but not saved
+
+--- Coming back online ---
+Saved: offline edit
+Saved: online edit
+```
+
+무슨 일이 일어나는지 살펴보겠습니다.
+
+온라인일 때는 변경된 값이 바로 저장됩니다. 앱이 오프라인 상태에 들어가면 watcher는 일시정지 됩니다.
+
+Watcher가 일시 정지 상태일 때 값을 변경하게 되면 vue 반응형 시스템이 해당 값들을 큐에 저장합니다. 하지만 저장 함수를 호출하지는 않습니다.
+
+온라인 상태로 전환되면, watcher가 다시 동작하게 됩니다. 그리고 큐에 저장되어있던 값들도 실행됩니다. "offline edit"이 그 결과입니다.
+
+그 후에 온라인 상태에서 발생하는 변경 값은 다시 저장됩니다.
+
+### 🎆 Queue에 저장하는 동작 살펴보기
+
+Vue의 반응형 시스템은 watcher가 일시 정지 되었을 때 자동으로 콜백함수의 호출을 큐에 저장합니다.
+변경사항이 유실되는것이 아니라 잠시 보류되는 것입니다.
+
+큐에 저장하는 방식도 효율적입니다. 일시 정지된 상태에서 동일한 reactive 값이 여러번 변경되더라도 마지막 변경 사항만 트리거 됩니다.
+
+### 🎆 실전에서 활용하기
+
+이 패턴은 아래와 같은 상황에서 매우 유용합니다.
+
+- 네트워크 연결
+  오프라인일 때 API 호출을 정지했다가 온라인일 때 다시 호출하게 할 수 있습니다.
+
+- 로딩 상태
+  로딩 중일 때 비용이 큰 watcher를 정지할 때 사용할 수 있습니다.
+
+- 사용자 권한 확인
+  권한이 없을 때 특정 watcher를 일시 정지 시킬때 사용할 수 있습니다.
+
+- 성능 최적화
+  고 비용의 작업을 수행할 때에 필수적인 watcher가 아닐경우 일시 정지 시킬 수 있습니다.
+
+<details>
+<summary>섹션 요약</summary>
+
+- `watch()`의 반환값에서 `pause()`와 `resume()` 함수를 구조분해 할당으로 가져와 watcher를 일시 정지하거나 재개할 수 있다
+- 일시 정지된 동안 발생한 변경사항은 큐에 저장되며, 재개 시 마지막 변경사항만 트리거된다
+- 오프라인/온라인 전환, 로딩 상태, 사용자 권한 확인, 성능 최적화 등의 상황에서 활용할 수 있다
+
+</details>
+
+## 🌃 Watcher 정지하기
+
+Watcher는 명시적으로 정지시키거나 effect scope이 정지되지 않으면 계속해서 실행됩니다. 만약 watcher를 동적으로 생성한다면 메모리 누수를 막기위해 이를 수동으로 제거해줘야 합니다.
+
+모든 watcher는 watcher를 정지시켜 반응형 시스템에서 제거하는 stop 함수를 반환합니다.
+
+### 🎆 메모리 누수 문제
+
+다른 데이터 소스에 대해 watcher를 동적으로 생성하는 모니터링 시스템을 살펴보겠습니다.
+
+```js
+import { ref, watch } from '@vue/reactivity';
+
+const serverLoad = ref(0);
+
+function startMonitoring(dataSourceId) {
+  console.log(`Starting monitoring for: ${dataSourceId}`);
+
+  // 이 watcher는 계속 실행됩니다.
+  watch(serverLoad, (load) => {
+    console.log(`Source ${dataSourceId} detected load: ${load}`);
+  });
+}
+
+function stopMonitoring(dataSourceId) {
+  console.log(`Stopping monitoring for: ${dataSourceId}`);
+}
+
+// 모니터링 시작
+startMonitoring('db-1');
+startMonitoring('api-2');
+startMonitoring('cache-3');
+
+serverLoad.value = 25; // 3개의 watcher 실행
+
+stopMonitoring('db-1');
+stopMonitoring('api-2');
+
+serverLoad.value = 50; // 3개의 watcher 실행
+```
+
+위 코드를 실행시키면 아래와 같은 결과가 출력됩니다.
+
+```
+--- Adding multiple data sources ---
+Starting monitoring for: db-1
+Starting monitoring for: api-2
+Starting monitoring for: cache-3
+
+--- Server load changes ---
+Source db-1 detected load: 25
+Source api-2 detected load: 25
+Source cache-3 detected load: 25
+
+--- Removing data sources ---
+Stopping monitoring for: db-1
+Stopping monitoring for: api-2
+
+--- Server load change after "cleanup" ---
+Source db-1 detected load: 50    // Still running!
+Source api-2 detected load: 50   // Still running!
+Source cache-3 detected load: 50
+```
+
+위의 예시에서 watcher는 절대 정지되지 않습니다. 이는 메모리 누수를 야기합니다.
+
+### 🎆 해결책: stop 함수 사용하기
+
+Watcher함수는 stop 함수를 반환합니다.
+
+```js
+import { ref, watch } from '@vue/reactivity';
+
+const serverLoad = ref(0);
+
+// stop 함수를 저장하는 자료구조
+const watchers = new Map();
+
+function startMonitoring(dataSourceId) {
+  console.log(`Starting monitoring for: ${dataSourceId}`);
+
+  // watcher가 반환하는 정지 함수
+  const stopWatcher = watch(serverLoad, (load) => {
+    console.log(`Source ${dataSourceId} detected load: ${load}`);
+  });
+
+  // clean up을 위해 저장
+  watchers.set(dataSourceId, stopWatcher);
+}
+
+function stopMonitoring(dataSourceId) {
+  console.log(`Stopping monitoring for: ${dataSourceId}`);
+
+  const stopWatcher = watchers.get(dataSourceId);
+
+  if (stopWatcher) {
+    stopWatcher();
+    watchers.delete(dataSourceId);
+  }
+}
+```
+
+이제 `stopMonitoring` 함수를 호출하면 watcher는 정지됩니다.
+
+위 코드를 실행하면 아래와 같이 출력됩니다.
+
+```
+--- Adding multiple data sources ---
+Starting monitoring for: db-1
+Starting monitoring for: api-2
+Starting monitoring for: cache-3
+
+--- Server load changes ---
+Source db-1 detected load: 25
+Source api-2 detected load: 25
+Source cache-3 detected load: 25
+
+--- Removing data sources ---
+Stopping monitoring for: db-1
+Stopping monitoring for: api-2
+
+--- Server load change after "cleanup" ---
+Source cache-3 detected load: 50
+```
+
+### 🎆 Stop vs Pause 비교하기
+
+Watcher를 정지하는것과 일시 정지하는것의 차이를 구별하는것이 중요합니다.
+
+**Pause/Resume**은 일시적으로 watcher를 비활성화 하지만 메모리에는 남겨둡니다. 언제든지 재개할 수 있고, 큐에 저장된 변경사항을 반영할 수도 있습니다.
+
+**Stop**은 watcher를 반응형 시스템에서 완전히 제거합니다. 일단 정지되면, watcher는 다시 시작할 수 없고, 큐에 저장된것들도 유실됩니다.
+
+### 🎆 Watcher가 자동으로 정지되는 상황
+
+- Component가 언마운트 될 때
+  Setup 함수 내부에 생성된 watcher는 컴포넌트가 언마운트될 때 자동으로 정지됩니다.
+
+- Effect Scope이 정지될 때
+  Effect Scope 내부에 선언된 watcher는 scope이 정지될 때 정지됩니다.
+
+- 수동으로 정지시킬 때
+  명시적으로 stop 함수를 호출하면 정지됩니다.
+
+컴포넌트 밖이나 effect scope 밖에서 생성된 watcher는 반드시 명시적으로 정지시켜야 합니다.
+
+<details>
+<summary>섹션 요약</summary>
+
+- 동적으로 생성된 watcher를 정지시키지 않으면 메모리 누수가 발생한다
+- `watch()`가 반환하는 stop 함수를 호출하여 watcher를 반응형 시스템에서 완전히 제거할 수 있다
+- Pause는 일시적 비활성화(재개 가능, 큐 보존)이고, Stop은 완전한 제거(재시작 불가, 큐 유실)이다
+- 컴포넌트 언마운트, effect scope 정지 시 자동으로 정지되지만, 그 외에는 반드시 수동으로 정지시켜야 한다
+
+</details>
