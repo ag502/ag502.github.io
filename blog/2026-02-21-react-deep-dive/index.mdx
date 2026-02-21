@@ -1,0 +1,221 @@
+---
+slug: react-deep-dive-immutability-ref-side-effect
+title: 'React 심화: 불변성, Ref, 그리고 Side Effect'
+tags: [secret-react, learning-react]
+unlisted: true
+---
+
+이 문서는 색인되지 않습니다.
+
+{/* truncate */}
+
+## 🌃 불변성 다시 살펴보기
+
+이 글에서 리액트의 까다로운 부분중에 하나인 메모이제이션과 `useEffect` hook에 대해 살펴보겠습니다. 이 부분을 제대로 이해하려면 리액트의 핵심 메커니즘인 불변성에 대해 제대로 이해하고 있어야 합니다.
+
+`{name: "Ivy"}`라는 객체를 상태로 들고 있는 `user`라는 변수가 있다고 가정해 보겠습니다.
+
+일반적인 자바스크립트라면 `user.name = 'Ava'`와 같이 객체의 프로퍼티를 변경할 수 있습니다. 하지만 이는 가변입니다! 리액트에서는 이와 같은 방식으로 값을 업데이트 하면 안됩니다.
+
+리액트에서는 `setUser({name: 'Ava'})`를 실행시켜 값을 업데이트 합니다.
+
+해당 함수를 호출할때마다 새로운 객체가 컴퓨터 메모리의 고유한 위치에 저장됩니다.
+기존의 `{name: 'Ivy'}` 객체를 변경한것도 아니고, 기존의 객체로 새로운 객체로 변경한것도 아닙니다. 일정기간동안 기존의 객체와 새로운 객체는 모두 존재합니다.
+
+각 스냅샷에는 고유한 `user` 변수가 존재해서 두개의 `user` 변수가 서로 다른 객체를 가리키고 있다고 생각할 수 있습니다.
+하지만 실제로는 자바스크립트의 가비지 콜렉터가 오래된 객체를 제거해 메모리가 가득찰 걱정은 하지 않아도 됩니다.
+
+자바스크립트에서 객체는 참조값으로 저장됩니다. 만약 형태가 동일한 두개의 객체 `{name: 'Ava'}`, `{name: 'Ava'}`를 각각 생성한다면 두 객체는 다른 객체입니다.
+
+만약 상태 변수가 여러개라면 어떻게 될까요? 예를 들어, 숫자 배열을 상태로 갖는 `item` 상태가 있다고 가정해보겠습니다.
+
+만약 `setUser()`를 호출해 새로운 스냅샷을 생성해 `user`를 업데이트 한다면, `items` 배열은 재사용됩니다.
+
+각각의 스냅샷은 새로운 `item` 변수를 생성하지만, 변수가 가리키는 배열은 항상 같습니다.
+
+이는 매우 중요합니다. 리액트가 언제 상태 변수를 업데이트 해야할지를 알려주기 때문입니다.
+`useEffect`나 `useMemo`/`useCallback` hook을 배우면서 이것이 어떤 의미를 갖는지 살펴보겠습니다.
+
+<details>
+<summary>섹션 요약</summary>
+
+- 리액트에서 상태를 업데이트할 때는 기존 객체를 변경하지 않고, setter 함수를 통해 새로운 객체를 생성해야 합니다.
+- 새로운 객체는 메모리의 별도 위치에 저장되며, 형태가 같더라도 서로 다른 참조를 가집니다.
+- 변경되지 않은 상태 변수는 스냅샷 간에 동일한 참조가 재사용됩니다. 이 특성은 `useEffect`, `useMemo` 등의 동작에 중요한 역할을 합니다.
+
+</details>
+
+### 🎆 Snapshot이 정확히 뭔가요?
+
+저는 "스냅샷" 이라는 용어를 렌더링을 수행한 결과로 사용했습니다. 이는 두가지 요소의 결합입니다.
+
+1. 렌더링이 발생했을 때, props/state의 값
+2. 컴포넌트에서 반환된 리액트 요소.
+
+여기서 궁금증이 생길 수 있습니다. *snapshot*과 *instance*의 차이가 뭘까요?
+
+컴포넌트의 인스턴스는 해당 컴포넌트에 대한 정보가 담겨있는("진실의 원천") 자바스크립트 객체입니다. 이 객체는 컴포넌트가 마운트될 때 생성되고 언마운트될 때까지 유지됩니다.
+
+이와 반대로 스냅샷은 자바스크립트 객체가 아닙니다. 좀 더 추상적인 개념입니다. 스냅샷은 특정 시점의 데이터를 의미합니다.
+
+즉, 인스턴스가 상태의 실제 값을 보관하고 있고, 상태가 변경될 때마다 그 시점의 값을 캡처한 스냅샷이 만들어진다고 할 수 있습니다.
+
+좀더 자세한 내용을 확인하고 싶다면 ["State as a Snapshot"](https://react.dev/learn/state-as-a-snapshot)를 확인해보세요.
+
+<details>
+<summary>섹션 요약</summary>
+
+- 스냅샷은 렌더링 시점의 props/state 값과 반환된 리액트 요소의 결합으로, 특정 시점의 데이터를 캡처한 추상적인 개념입니다.
+- 인스턴스는 컴포넌트의 실제 정보를 담고 있는 자바스크립트 객체로, 마운트부터 언마운트까지 유지됩니다.
+- 인스턴스가 상태의 실제 값을 보관하고, 상태가 변경될 때마다 그 시점의 스냅샷이 만들어집니다.
+
+</details>
+
+## 🌃 Refs
+
+일반적으로 웹 개발자는 `div`, `button`, `form` 같은 표준 DOM요소를 이용하여 사용자 인터페이스를 구축합니다.
+
+하지만 웹은 HTML canvas처럼 UI를 그리는 다른 방식을 제공합니다.
+
+HTML Canvas는 익숙하지 않으신 분들을 위해 설명드리자면, 마치 마이크로소프트 페인트처럼 도형을 그려 그래픽을 만들 수 있는 기능을 제공합니다.
+
+HTML canvas로 작업을 시작하려면, `canvas` 태그를 렌더링해야 한후에 자바스크립트 코드를 작성해야 합니다. 아래는 예시입니다.
+
+```javascript
+const canvas = document.querySelector('canvas');
+const ctx = canvas.getContext('2d');
+
+ctx.fillRect(0, 0, 200, 100);
+```
+
+`ctx`는 그림을 그리는 영역입니다. Webgl을 사용하여 2D로 그릴것인지 3D로 그릴것인지 선택할 수 있습니다.
+
+여기서 생기는 의문점은 어떻게 이런 작업을 리액트에서 할 수 있을지 입니다.
+
+JSX를 작성하는것은 사실 HTML을 작성하는게 아닙니다. 자바스크립트를 작성하면 리액트가 코드를 실제 DOM으로 변환합니다.
+
+이런 추상화는 리액트가 어려운 작업을 대신해주기 때문에 좋습니다. 하지만 때때로 이 점이 방해가 될때가 있습니다. 바로 DOM 노드에 접근하려고 할 때 입니다.
+이런 경우는 `canvas`를 사용할 때 발생합니다.
+
+앞서 살펴본 코드에서는 `document.querySelector`를 사용하여 렌더링 후에 요소의 참조값을 가져왔지만 이 방법은 리액트에서 권장하는 방법이 아닙니다.
+
+리액트는 이런 상황에서 사용할 수 있는 `ref`를 제공합니다.
+
+```jsx
+<canvas
+  width={200}
+  height={100}
+  ref={function (canvas) {
+    console.log(canvas);
+  }}
+/>
+```
+
+리액트가 이 요소를 렌더링할 때마다, `ref` 함수가 호출되고 DOM요소를 전달합니다.
+
+만약 canvas의 참조값을 인자로 받아 그림을 그리는 `draw` 함수를 작성했다면 아래와 같이 작성할 수 있습니다.
+
+```jsx
+<canvas
+  width={200}
+  height={200}
+  ref={function (canvas) {
+    draw(canvas);
+  }}
+/>
+```
+
+이 방식은 잘 동작하지만 UX적으로는 좋지 않습니다. 버튼을 클릭할 때 그림을 그리게끔 수정해보겠습니다.
+
+버튼의 `onClick` 핸들러에서 canvas의 ref에 접근하려면 해당 변수를 저장해두어야 합니다.
+
+```jsx
+function ArtGallery() {
+  let canvas;
+
+  return (
+    <main>
+      <div className="canvas-wrapper">
+        <canvas
+          ref={function (ref) {
+            canvas = ref;
+          }}
+          width={200}
+          height={200}
+        />
+      </div>
+      <button
+        onClick={() => {
+          draw(canvas);
+        }}
+      >
+        Draw!
+      </button>
+    </main>
+  );
+}
+
+function draw(canvas) {
+  // Code omitted
+}
+```
+
+이 방법은 놀라울 정도로 잘 동작하지만 성능적인 문제가 있습니다. `ref` 함수는 모든 렌더링마다 실행되기 때문에 계속 DOM 노드를 탐색합니다.
+
+컴포넌트가 최초 렌더링될 때 한번만 조회했으면 좋을것 같습니다. 그런 다음에 canvas의 참조값을 이후 모든 렌더링 과정에 전달하면 됩니다.
+
+이는 `useRef` hook을 사용하면 가능합니다.
+
+```jsx
+function ArtGallery() {
+  const canvasRef = useRef(); // {current: undefined}
+
+  return (
+    <main>
+      <div className="canvas-wrapper">
+        <canvas
+          // 2. Capture a reference to the <canvas> tag,
+          // and put it in the “canvasRef” box.
+          //
+          // { current: <canvas> }
+          ref={canvasRef}
+          width={200}
+          height={200}
+        />
+      </div>
+      <button
+        onClick={() => {
+          // 3. Pluck the <canvas> tag from the box,
+          // and pass it onto our `draw` function.
+          draw(canvasRef.current);
+        }}
+      >
+        Draw!
+      </button>
+    </main>
+  );
+}
+```
+
+`useRef`를 호출하면 `current` 프로퍼티를 가진 객체를 반환합니다.
+
+이 객체를 `ref` 속성에 전달하면 리액트는 이 객체의 `current` 프로퍼티를 canvas의 참조값으로 변경합니다.
+
+컴포넌트가 최초로 렌더링될 때 실행된다는 점은 성능상으로 이득입니다.
+
+이 방법은 DOM 노드의 참조값을 사용할 때 리액트에서 권장하는 방법입니다.
+
+:::info DOM 노드만 해당되지는 않습니다!
+`useRef`로 생성된 ref 객체는 일종의 상자로 생각할 수 있습니다.
+상자에 원하는 무엇이든 다 저장할 수 있습니다.(DOM 노드, 숫자, 배열, 객체, 함수 등등)
+:::
+
+<details>
+<summary>섹션 요약</summary>
+
+- 리액트는 DOM을 추상화하기 때문에, DOM 노드에 직접 접근해야 할 때(예: canvas) `ref`를 사용합니다.
+- `ref` 콜백 함수 방식은 매 렌더링마다 실행되어 성능 문제가 있을 수 있습니다.
+- `useRef` hook은 `{current: ...}` 객체를 반환하며, 최초 렌더링 시 한 번만 DOM 참조를 캡처하고 이후 렌더링에서 재사용합니다.
+- ref 객체는 DOM 노드뿐 아니라 어떤 값이든 저장할 수 있는 범용 상자입니다.
+
+</details>

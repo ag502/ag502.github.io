@@ -52,3 +52,18 @@ designPatterns:
   label: Design Patterns
   permalink: /design-patterns
   description: Design Patterns tag description
+
+secret-vue:
+  label: Secret Vue
+  permalink: /secret-vue
+  description: Secret Vue tag description
+
+secret-react:
+  label: Secret React
+  permalink: /secret-react
+  description: Secret React tag description
+
+secret-css:
+  label: Secret CSS
+  permalink: /secret-css
+  description: Secret CSS tag description
