@@ -1265,3 +1265,117 @@ Stale value 문제는 `useEffect`에만 국한된것은 아닙니다. 뒤에서 
 - 대부분의 경우 콜백 구문은 불필요하며, stale value 문제를 피하거나 자식 컴포넌트에 상태 업데이트 함수를 전달할 때 주로 사용한다
 
 </details>
+
+## 🌃 Strict Mode
+
+리액트에서 사소한 함정들이 많습니다. 이 문제는 개발자들에게는 명확하게 드러나지 않지만 사용자에게는 큰 문제를 야기합니다.
+
+이런 문제들을 해결하는데 도움을 주기 위해 리액트 팀에서는 "Strict Mode"라는 기능을 제공합니다.
+
+"Strict Mode"를 활성화하기 위해서는 애플리케이션을 `React.StrictMode`라는 요소로 감싸야합니다.
+
+```
+import React from 'react';
+
+root.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
+```
+
+이 리액트 요소는 리액트 내부에서 스위치를 켜서 애플리케이션의 안정성을 향상시키기 위해 설계된 여러가지 제약과 안전 장치를 추가합니다.
+
+앞서 살펴본 미디어 플레이어의 예시에서 cleanup 함수를 제거했다고 가정해보겠습니다.
+
+```jsx
+useEffect(() => {
+  function handleKeyDown(event) {
+    if (event.code === 'Space') {
+      setIsPlaying((currentIsPlaying) => !currentIsPlaying);
+    }
+  }
+
+  window.addEventListener('keydown', handleKeyDown);
+
+  return () => {};
+}, []);
+```
+
+살펴봤던대로, 위 코드는 메모리 누수를 발생시킵니다.
+
+- 컴포넌트가 마운트될 때마다 새로운 이벤트 리스너를 계속해서 쌓습니다.
+- `handleKeyDown` 이벤트 콜백이 컴포넌트 인스턴스의 일부이기 때문에 자바스크립트의 가비지 콜렉터는 이전 인스턴스를 제거하지 못합니다.
+
+사실 이 문제는 눈에 띄지 않을 만큼 작아서 장기간 실행되는 작업이나 메모리가 제한적인 기기에서만 재현됩니다. 실제로 테스트할때 컴포넌트를 여러번 마운트/언마운트해도 성능상의 문제를 찾기 어려울 수 있습니다.
+
+또한 lint 경고나 콘솔 오류도 노출되지 않습니다.
+
+위 코드가 문제가 있다는 것은 프로덕션 환경에 배포하고 며칠이 지난 후에 발견될 수 있습니다. 지원팀이 "왜 미디어 플레이어가 제 컴퓨터 메모리의 90%를 차지하는거죠?" 나 "왜 미디어 플레이어를 실행하면 펜이 심하게 동작하는거죠?" 와 같은 티켓을 받기 시작할 것입니다.
+
+리액트 팀은 개발 과정에서 이러한 문제를 쉽게 발견할 수 있도록 Strict Mode를 도입했습니다.
+
+Strict mode에서는 사소한 문제도 심각한 문제로 변합니다. 위 코드에서 스페이스바 단축키는 동작하지 않습니다.
+
+왜 그런지 설명을 드리자면, strict mode에서는 모든 effect를 한번 더 실행시킵니다. 따라서 아래의 코드는 두번 실행됩니다.
+
+```js
+function handleKeyDown(event) {
+  if (event.code === 'Space') {
+    setIsPlaying((currentIsPlaying) => !currentIsPlaying);
+  }
+}
+
+window.addEventListener('keydown', handleKeyDown);
+```
+
+결과적으로 하나의 컴포넌트 인스턴스에 두개의 이벤트 리스너가 등록됩니다. 스페이스키를 누르면 `setIsPlaying(!false)`를 호출하여 `true`로 바꾸지만 다시 실행되기 때문에 `false`로 변경됩니다.
+
+이 문제를 해결하기 위해서 cleanup 함수를 추가해줘야 합니다.
+
+```jsx
+useEffect(() => {
+  function handleKeyDown(event) {
+    if (event.code === 'Space') {
+      setIsPlaying((currentIsPlaying) => !currentIsPlaying);
+    }
+  }
+
+  window.addEventListener('keydown', handleKeyDown);
+
+  return () => {
+    window.removeEventListener('keydown', handleKeyDown);
+  };
+}, []);
+```
+
+Strict mode가 아닌경우 실행단계는 다음과 같습니다.
+
+1. 마운트
+2. Effect 실행
+
+Strict mode에서 실행단계는 아래와 같습니다.
+
+1. 마운트
+2. Effect 실행
+3. Cleanup 함수 실행
+4. Effect 재실행
+
+리액트 팀은 이렇게 눈에 띄지 않는 문제를 잘 파악할 수 있도록 이런 동작을 추가했습니다. Clean up 함수가 없으면, 두번 실행할때 많은 문제가 발생합니다.
+
+아마 effect를 두번 실행하는데 비용이 많이 들거라고 생각할 수 있습니다.
+
+정답은 맞습니다. 하지만 단서가 붙습니다.
+
+Strict mode는 개발 환경에서만 동작합니다. 프로덕션 환경에서는 영향을 미치지 않습니다.
+즉, 애플리케이션을 번들링해서 배포하면 strict mode는 비활성되어 아무런 영향을 미치지 않습니다.
+
+<details>
+<summary>섹션 요약</summary>
+
+- Strict Mode는 `React.StrictMode`로 애플리케이션을 감싸 활성화하며, 개발 환경에서만 동작하고 프로덕션에는 영향을 미치지 않는다
+- Strict Mode에서는 모든 effect를 두 번 실행(effect → cleanup → effect)하여, cleanup 함수가 누락된 경우 문제를 즉시 드러나게 한다
+- Cleanup 함수가 없으면 이벤트 리스너가 중복 등록되어 상태가 두 번 토글되는 등 눈에 띄는 버그로 나타난다
+- 이를 통해 프로덕션 환경에서 발견하기 어려운 메모리 누수와 같은 문제를 개발 단계에서 조기에 발견할 수 있다
+
+</details>
