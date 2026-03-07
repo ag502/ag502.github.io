@@ -1,0 +1,230 @@
+---
+slug: data-fetching
+title: 데이터 불러오기
+tags: [secret-react, learning-react]
+unlisted: true
+---
+
+이 문서는 색인되지 않습니다.
+
+{/* truncate */}
+
+데이터를 불러오는 것은 대부분의 웹 애플리케이션에서 매우 중요한 요소입니다. 대부분의 웹 애플리케이션은 데이터베이스에서 불러온 데이터를 바탕으로 사용자 인터랙션을 처리하기 위해 존재합니다.
+
+- 검색 엔진은 수억 개의 데이터 중에서 가장 적합한 결과를 필터링 해주는 거대한 데이터베이스입니다.
+- 슬랙 같은 채팅 애플리케이션은 데이터베이스에 저장된 메시지를 주고 받을 수 있습니다.
+- 소셜 네트워크는 데이터베이스로부터 피드를 제공하며 데이터베이스에 있는 피드들을 업데이트함으로써 상호 작용을 할 수 있게 합니다.
+
+이 글에서는 리액트에서 네트워크 요청을 어떻게 보내는지 알아보겠습니다.
+
+## 🌃 이벤트를 통해서 불러오기
+
+개발자 포트폴리오 사이트를 만들어본 경험이 있다면 *연락처 폼*을 구현해 본 적이 있을 겁니다. 이 폼들은 웹 애플리케이션에서 흔하게 볼 수 있습니다.
+
+어떻게 구현할 수 있는지 알아보겠습니다.
+
+```jsx live
+function ContactForm() {
+  const ENDPOINT = '';
+  const [email, setEmail] = React.useState('');
+  const [message, setMessage] = React.useState('');
+
+  const id = React.useId();
+  const emailId = `${id}-email`;
+  const messageId = `${id}-message`;
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+
+    const response = await fetch(ENDPOINT, {
+      method: 'POST',
+      body: JSON.stringify({ email, message }),
+    });
+
+    const json = await response.json();
+    console.log(json);
+  }
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <div className="row">
+        <label htmlFor={emailId}>Email</label>
+        <input
+          required={true}
+          id={emailId}
+          type="email"
+          value={email}
+          onChange={(event) => {
+            setEmail(event.target.value);
+          }}
+        />
+      </div>
+      <div className="row">
+        <label htmlFor={messageId}>Message</label>
+        <textarea
+          required={true}
+          id={messageId}
+          value={message}
+          onChange={(event) => {
+            setMessage(event.target.value);
+          }}
+        />
+      </div>
+      <div className="button-row">
+        <span className="button-spacer" />
+        <button>Submit</button>
+      </div>
+    </form>
+  );
+}
+```
+
+- 위 코드에서 이메일과 메시지에 대하여 제어 인풋을 추가했습니다.
+- form의 `onSubmit` 속성에 이벤트 함수를 전달하였고, 해당 함수에 `event.preventDefault()`를 호출하여 기본 동작을 막았습니다.
+  해당 함수에서 데이터 제출을 처리하기 위해 `fetch` 함수를 사용했습니다.
+- `fetch` 함수는 promise 기반의 함수이기 때문에 이벤트 함수를 async 함수로 변경했습니다. 따라서 응답을 기다릴 수 있습니다.
+
+위 코드는 이벤트 기반의 네트워크 요청을 할 때 기본적인 방법이지만 UX적인 관점에서 추가해야 할 코드가 많습니다.
+
+### 🎆 Loading, success, error 상태 처리
+
+네트워크 요청을 보낼 때, UI를 아래의 3가지 상태에 따라 업데이트 해야하는 경우가 있습니다.
+
+- Loading
+- Success
+- Error
+
+우선 `status` 상태는 4가지의 값을 가질 수 있습니다.
+
+- `idle`
+- `loading`
+- `success`
+- `error`
+
+Form이 제출되면 상태는 `loading`으로 변경됩니다.
+
+요청이 성공했다는 건 어떻게 알까요? 상태 코드를 사용할 수도 있지만 신뢰성이 떨어질 수 있기 때문에 JSON의 결과를 보겠습니다.
+만약 `json.ok`의 값이 truthy한 값이면 상태를 `success`로 변경하고 그렇지 않으면 `error`로 변경합니다.
+
+상태가 `loading`이면 UI를 두 가지 방향으로 변경할 것입니다.
+
+- 모든 인풋 필드와 버튼이 비활성화 됩니다. 이는 무언가 발생한다는 힌트인 동시에 중복 요청을 방지하는 역할을 합니다.
+- 버튼의 텍스트가 "Submit"이나 "Submitting..."으로 변경됩니다.
+
+상태가 `success`일 때, 몇 가지 선택지가 있습니다. Form을 성공 메시지로 교체하거나, form 아래에 작은 메시지를 보여줄 수 있습니다. 만약 form 아래에 메시지를 보여주는 방법을 선택했다면, 메시지를 리셋하는 기능이 필요합니다.
+
+`error` 상태에서는 form 아래에 오류 메시지를 보여줘야 합니다.
+
+위 계획을 구현한 코드는 아래와 같습니다.
+
+```jsx live
+function ContactForm() {
+  const ENDPOINT = '';
+
+  const [email, setEmail] = useState('');
+  const [message, setMessage] = useState('');
+
+  // idle | loading | success | error
+  const [status, setStatus] = useState('idle');
+
+  const id = React.useId();
+  const emailId = `${id}-email`;
+  const messageId = `${id}-message`;
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+
+    setStatus('loading');
+
+    const response = await fetch(ENDPOINT, {
+      method: 'POST',
+      body: JSON.stringify({
+        email,
+        message,
+      }),
+    });
+    const json = await response.json();
+
+    if (json.ok) {
+      setStatus('success');
+      setMessage('');
+    } else {
+      setStatus('error');
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <div className="row">
+        <label htmlFor={emailId}>Email</label>
+        <input
+          required={true}
+          disabled={status === 'loading'}
+          id={emailId}
+          type="email"
+          value={email}
+          onChange={(event) => {
+            setEmail(event.target.value);
+          }}
+        />
+      </div>
+      <div className="row">
+        <label htmlFor={messageId}>Message</label>
+        <textarea
+          required={true}
+          disabled={status === 'loading'}
+          id={messageId}
+          value={message}
+          onChange={(event) => {
+            setMessage(event.target.value);
+          }}
+        />
+      </div>
+      <div className="button-row">
+        <span className="button-spacer" />
+        <button disabled={status === 'loading'}>
+          {status === 'loading' ? 'Submitting…' : 'Submit'}
+        </button>
+      </div>
+      {status === 'success' && <p>Message sent!</p>}
+      {status === 'error' && <p>Something went wrong!</p>}
+    </form>
+  );
+}
+```
+
+:::info 예측하지 못한 오류 잡기
+위 코드에서 JSON 응답을 확인함으로써 예측할 수 있는 오류를 처리했습니다. 하지만 예측하지 못한 오류가 발생할 수 있습니다.
+서버가 죽는 상황이 그 예시입니다.
+
+이 상황을 처리하기 위해 fetch 요청을 `try`/`catch` 문으로 감싸야 합니다.
+
+```js
+async function handleSubmit(event) {
+  event.preventDefault();
+
+  setStatus('loading');
+
+  try {
+    const response = await fetch(ENDPOINT, {
+      method: 'POST',
+      body: JSON.stringify({
+        email,
+        message,
+      }),
+    });
+    const json = await response.json();
+
+    if (json.ok) {
+      setStatus('success');
+      setMessage('');
+    } else {
+      setStatus('error');
+    }
+  } catch (err) {
+    setStatus('error');
+  }
+}
+```
+
+:::
