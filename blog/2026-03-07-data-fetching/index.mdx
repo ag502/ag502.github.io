@@ -443,3 +443,103 @@ function App() {
 - `isLoading`으로 로딩 상태를 처리하고, fetcher 함수에서 에러를 throw하면 `error` 값으로 에러 상태를 처리할 수 있다
 
 </details>
+
+## 🌃 비동기 effect 살펴보기
+
+SWR을 사용하지 않고 마운트 시에 데이터를 불러와야 한다고 가정해보겠습니다. `fetch` 요청을 `useEffect` 훅 내부에 선언해야 합니다.
+
+대부분의 개발자들은 async/await 구문을 사용하여 아래처럼 작성할 것입니다.
+
+```
+useEffect(async () => {
+  const response = await fetch(ENDPOINT);
+  const json = await response.json();
+
+  setTemperature(json.temperature);
+}, []);
+```
+
+`await` 키워드를 사용하려면, `async` 함수 내부에서 사용해야 합니다. Effect 함수의 콜백을 async로 변경하면 될 것 같았지만 안타깝게도 그러면 동작하지 않습니다.
+
+Effect의 callback을 비동기로 만드는 것은 안됩니다. 대신에 effect 내부에 새로운 함수를 만들어야 합니다.
+
+```js
+React.useEffect(() => {
+  // Create an async function within our effect:
+  async function runEffect() {
+    const response = await fetch(ENDPOINT);
+    const json = await response.json();
+
+    setTemperature(json.temperature);
+  }
+
+  // Immediately call this function to run the effect:
+  runEffect();
+}, []);
+```
+
+:::info 왜 effect callback은 비동기가 될 수 없을까요?
+비동기 함수를 생성하고 바로 실행하는 것이 이상해 보일 수 있습니다. 왜 `useEffect`에 비동기 함수를 전달할 수 없는 걸까요?
+
+비동기 함수에 대해 이해할 사항은 항상 promise를 반환한다는 것입니다.
+
+예를 들어,
+
+```js
+async function quickExample() {
+  return 5;
+}
+
+const result = quickExample();
+console.log(result); // Promise
+```
+
+`quickExample` 함수는 숫자 `5` 를 반환하지 않습니다. `5`를 resolve하는 promise를 반환합니다. 이는 `await`를 하지 않는 함수를 포함해서 모든 비동기 함수에 해당하는 내용입니다.
+
+리액트는 promise가 아닌 cleanup 함수를 반환해야 합니다.
+
+아래와 같은 effect를 살펴보겠습니다.
+
+```js
+React.useEffect(() => {
+  // Effect logic: start an interval
+  const intervalId = window.setInterval(() => {}, 1000);
+
+  // Cleanup logic: stop the interval:
+  return () => {
+    window.clearInterval(intervalId);
+  };
+}, []);
+```
+
+리액트가 effect를 실행할 때 cleanup 함수를 전달합니다. 리액트는 의존성이 변경되거나 컴포넌트가 언마운트될 때 cleanup 함수를 실행합니다.
+
+이제 effect 내부에서 비동기 작업을 수행하는 예시를 살펴보겠습니다.
+
+```
+React.useEffect(async () => {
+  const intervalId = window.setInterval(() => {}, 1000);
+
+  await someLongRunningProcess();
+
+  // Even though we're returning a function, it'll actually
+  // return a *promise* that resolves to a function:
+  return () => {
+    window.clearInterval(intervalId);
+  };
+});
+```
+
+리액트가 이 effect를 실행할 때 cleanup 함수가 아닌 promise를 전달 받습니다.
+
+장기적으로 실행되는 작업이 진행 중일 때 컴포넌트가 언마운트 된다면 어떻게 될까요? cleanup 함수는 실행되지 않습니다. 리액트가 cleanup 함수를 전달받지 못했기 때문입니다.
+
+:::
+
+<details>
+<summary>섹션 요약</summary>
+
+- `useEffect`의 콜백을 직접 async로 만들 수 없으며, effect 내부에 별도의 async 함수를 선언한 뒤 즉시 호출해야 한다
+- async 함수는 항상 promise를 반환하기 때문에, 콜백을 async로 만들면 리액트가 cleanup 함수 대신 promise를 전달받아 cleanup이 동작하지 않는다
+
+</details>
