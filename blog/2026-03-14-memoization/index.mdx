@@ -697,7 +697,7 @@ function App() {
 }
 ```
 
-위 예시는 흔한 counter 애플리케이션이지만, "Mega Boost" 버튼이 추가되었습니다. 이 버튼은 급할 때 일반 버튼을 여러번 클릭하지 않고도 카운터를 큰 수로 증가시킵니다.
+위 예시는 흔한 counter 애플리케이션이지만, "Mega Boost" 버튼이 추가되었습니다. 이 버튼은 급할 때 일반 버튼을 여러 번 클릭하지 않고도 카운터를 큰 수로 증가시킵니다.
 
 `MegaBoost` 컴포넌트는 `React.memo`로 감싸져 있기 때문에 순수한 컴포넌트입니다. 이 컴포넌트는 `count`를 props로 받지 않지만, `count`가 변경될 때마다 다시 렌더링됩니다!
 
@@ -705,7 +705,7 @@ function App() {
 
 앞 섹션에서 살펴본 `boxes` 배열과 동일한 문제이지만 함수를 props로 전달했다는 점이 다릅니다.
 
-`useMemo`에서 살펴봤던것을 사용하면 다음과 같이 문제를 해결할 수 있습니다.
+`useMemo`에서 살펴봤던 것을 사용하면 다음과 같이 문제를 해결할 수 있습니다.
 
 ```jsx
 const handleMegaBoost = useMemo(() => {
@@ -717,7 +717,7 @@ const handleMegaBoost = useMemo(() => {
 
 배열을 반환하는 대신에, 함수를 반환했습니다. 이제 함수는 `handleMegaBoost` 변수에 저장되었습니다.
 
-이렇게 해도 동작하지만.... 다음과 같이 하는게 더욱 편합니다.
+이렇게 해도 동작하지만.... 다음과 같이 하는 게 더욱 편합니다.
 
 ```jsx
 const handleMegaBoost = useCallback(() => {
@@ -740,7 +740,7 @@ React.useMemo(() => function helloWorld() {}, []);
 :::info 상태 설정함수 콜백
 앞서 살펴본 예시에서 상태를 업데이트하기 위해 setter에 콜백함수를 전달했습니다.
 
-왜 이 방법을 사용해야 할까요? 일반적인 방법을 어떻게 되는지 알아보겠습니다.
+왜 이 방법을 사용해야 할까요? 일반적인 방법은 어떻게 되는지 알아보겠습니다.
 
 ```jsx
 const handleMegaBoost = React.useCallback(() => {
@@ -751,7 +751,7 @@ const handleMegaBoost = React.useCallback(() => {
 }, []);
 ```
 
-`count`에 접근하고 있지만 의존성 배열에 이 값을 추가하지 않았습니다. Effect에서 보았듯이 `count`는 오래된 상태(stale)가 될 것 입니다.
+`count`에 접근하고 있지만 의존성 배열에 이 값을 추가하지 않았습니다. Effect에서 보았듯이 `count`는 오래된 상태(stale)가 될 것입니다.
 실제 `count` 변수가 변해도 함수 내부에 있는 `count`는 항상 `0`입니다.
 
 `count`를 의존성 배열에 추가하면 이 문제를 해결할 수 있습니다.
@@ -767,3 +767,124 @@ const handleMegaBoost = React.useCallback(() => {
 Setter 함수에 콜백함수를 전달하면 `count`가 변경되어도 새로운 함수를 생성하지 않고 항상 최신 값에 접근할 수 있게 해줍니다.
 
 :::
+
+## 🌃 대안들
+
+[useMemo](#-usememo-hook) 섹션에서 살펴본 것처럼 `useMemo` hook이 비용이 비싼 계산 결과를 캐싱하는지를 살펴봤습니다.
+
+`useMemo`를 사용하는 것이 타당하지만, 컴포넌트의 관점에서 보았을 때 과연 최선의 방법일까요?
+
+앞서 살펴본 소수 계산 `App` 컴포넌트는 두 개의 관련 없는 작업을 수행하고 있습니다.
+
+1. 시간 표시
+2. 소수 목록 계산
+
+만약 이 두 개의 작업을 두 개의 컴포넌트로 분리한다면 어떻게 될까요?
+
+```jsx
+import React from 'react';
+
+import Clock from './Clock';
+import PrimeCalculator from './PrimeCalculator';
+
+function App() {
+  return (
+    <>
+      <Clock />
+      <PrimeCalculator />
+    </>
+  );
+}
+
+export default App;
+```
+
+`Clock`과 `PrimeCalculator` 두 개의 컴포넌트를 새로 생성했습니다. 이 두 개의 컴포넌트는 형제 관계이기 때문에 `Clock`이 업데이트되어도 `PrimeCalculator`는 업데이트되지 않습니다.
+
+<img
+  src={require('./use-memo-alternative.png').default}
+  alt="useMemo 대안: 컴포넌트 분리"
+/>
+
+상태 끌어올리기는 많이 들어봤을 것입니다. 하지만 때로는 상태를 아래로 내리는 것이 도움이 될 수 있습니다. 각각의 컴포넌트는 단일 책임을 가지고 있습니다.
+
+하지만 이것이 항상 가능한 선택지는 아닙니다. 실제 대규모 애플리케이션에서는 위로 끌어올려야만 하는 상태들이 많습니다.
+
+이런 상황에서 사용할 수 있는 또 다른 대안이 있습니다.
+
+`time` 변수를 `PrimeCalculator` 컴포넌트 위로 올려야 한다고 가정해보겠습니다.
+
+```jsx
+function App() {
+  const time = useTime();
+
+  return (
+    <>
+      <Clock time={time} />
+      <PrimeCalculator />
+    </>
+  );
+}
+```
+
+이 경우 `time` 변수가 변경될 때 `PrimeCalculator` 컴포넌트는 다시 렌더링됩니다.
+
+`useMemo` hook을 사용해서 이 문제를 해결할 수 있지만, 다른 방법도 있습니다. 컴포넌트 전체를 캐싱하면 어떨까요?
+
+```jsx
+// PrimeCalculator.js
+function PrimeCalculator() {
+  // Unchanged
+}
+
+export default React.memo(PrimeCalculator);
+```
+
+[리액트에서 재렌더링이 발생하는 이유](#-리액트에서-재렌더링이-발생하는-이유) 섹션에서 살펴본 것처럼, `React.memo`는 컴포넌트를 감싸 관련 없는 업데이트로부터 재렌더링을 막습니다.
+`PrimeCalculator` 컴포넌트는 props나 상태가 변경될 때만 다시 렌더링됩니다.
+
+`PrimeCalculator` 컴포넌트는 props를 받고 있지 않고, 다시 렌더링하는 유일한 조건은 `selectedNum` 상태가 변경되었을 때입니다.
+
+분명히 말씀드리면, `useMemo`가 나쁘다거나 항상 다른 대안을 찾아야 한다는 뜻은 아닙니다. 제가 이야기하고 싶은 바는 애플리케이션 구조에 집중해야 한다는 것입니다.
+코드를 더 읽기 쉽게 리팩토링하면 성능 향상이라는 이점을 자연스럽게 얻을 수 있으며, `useMemo`가 더 이상 필요하지 않을 수도 있습니다.
+
+<details>
+<summary>섹션 요약</summary>
+
+- 관련 없는 상태를 별도의 컴포넌트로 분리하면 상태 변경이 형제 컴포넌트에 영향을 주지 않아 불필요한 재렌더링을 방지할 수 있다.
+- 상태를 끌어올려야 하는 경우, `React.memo`로 자식 컴포넌트를 감싸 관련 없는 재렌더링을 막을 수 있다.
+- `useMemo`에 의존하기보다 애플리케이션 구조를 개선하는 것이 더 근본적인 성능 최적화 방법이다.
+
+</details>
+
+## 🌃 리액트 컴파일러
+
+지금까지 `React.memo`를 사용하여 컴포넌트를 캐싱하여 불필요한 렌더링을 막는 법과 `React.useMemo`/`React.useCallback`을 사용하여 컴포넌트 내에서 계산 결과를 캐싱하는 법을 살펴봤습니다.
+
+수년 동안, 개발자들은 이런 작업들을 자동화할 수 있는 방법을 고민해왔습니다. 최적화 코드를 우리가 직접 작성하는 것보다는 리액트가 코드를 분석하여 자동으로 최적화해주는 것이 더 유용하지 않을까요?
+
+사실 이 기능은 리액트 팀이 수년 동안 작업해왔습니다. 이론적으로는 가능하다는 것을 알고 있었지만, 상당히 복잡한 요소들이 있었습니다.
+2023년 3월에 리액트 팀은 [production에서 테스트](https://react.dev/blog/2023/03/22/react-labs-what-we-have-been-working-on-march-2023#react-optimizing-compiler)를 시작했고 이 프로젝트를 *React Compiler*라고 불렀습니다.
+
+기본 아이디어는 다음과 같습니다.
+
+리액트 컴파일러는 webpack과 같은 번들러와 통합되는 새로운 프로세스입니다.
+번들러가 동작할 때, 모든 모듈을 번들로 묶고, JSX와 타입스크립트를 자바스크립트로 전환하며 새로운 리액트 컴파일러가 `React.memo`와 `React.useMemo`, `React.useCallback`들을 직접 추가합니다. 다시 말해서 모든 컴포넌트가 순수 컴포넌트가 되며 모든 함수들이 캐싱됩니다.
+
+:::info 그럼 기존에 존재했던 최적화 코드는 어떻게 되나요?
+리액트 컴파일러는 똑똑하기 때문에 기존에 최적화 코드가 존재했다면 추가하지 않습니다. 따라서 기존의 코드를 수정할 필요는 없습니다.
+:::
+
+### 🎆 리액트 컴파일러 적용해보기
+
+리액트 컴파일러에 대한 내용은 리액트 문서에서 확인할 수 있습니다.
+
+- [리액트 컴파일러 문서](https://react.dev/learn/react-compiler)
+
+<details>
+<summary>섹션 요약</summary>
+
+- 리액트 컴파일러는 번들러와 통합되어 `React.memo`, `useMemo`, `useCallback`을 자동으로 추가해주는 도구이다.
+- 기존에 최적화 코드가 있다면 중복으로 추가하지 않으므로, 기존 코드를 수정할 필요가 없다.
+
+</details>
